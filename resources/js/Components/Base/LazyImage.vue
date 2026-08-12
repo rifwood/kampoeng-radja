@@ -1,0 +1,2 @@
+<script setup>defineProps({ src: { type: String, default: null }, alt: { type: String, default: '' }, className: { type: String, default: '' } });</script>
+<template><img v-if="src" :src="src" :alt="alt" loading="lazy" :class="className" /><div v-else :class="className" class="grid place-items-center bg-primary-blue/15 p-5 text-center text-sm font-bold text-neutral-gray">[PLACEHOLDER: Aset resmi belum tersedia]</div></template>

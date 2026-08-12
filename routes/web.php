@@ -1,22 +1,23 @@
 <?php
 
+use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [PublicPageController::class, 'home'])->name('home');
+Route::get('/tentang-kami', [PublicPageController::class, 'about'])->name('tentang-kami');
+Route::get('/wahana', [PublicPageController::class, 'rides'])->name('wahana');
+Route::get('/galeri-event', [PublicPageController::class, 'events'])->name('galeri-event');
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/coming-soon', fn () => inertia('ComingSoon'))
+    ->middleware('auth')
+    ->name('coming-soon');
+
+// Alias route name retained for Laravel Breeze's default verification flow.
+// It resolves to the Phase 1 Coming Soon page; no dashboard is implemented.
+Route::get('/coming-soon', fn () => inertia('ComingSoon'))
+    ->middleware('auth')
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

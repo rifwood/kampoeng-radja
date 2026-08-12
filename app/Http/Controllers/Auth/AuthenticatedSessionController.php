@@ -33,6 +33,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // The route name is retained for Laravel Breeze compatibility, but it
+        // resolves to the Phase 1 Coming Soon page rather than a dashboard.
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

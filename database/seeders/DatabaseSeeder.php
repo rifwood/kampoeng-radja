@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Category;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,11 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $wahana = Category::firstOrCreate(['slug' => 'wahana'], ['name' => 'Wahana']);
+        Category::firstOrCreate(['slug' => 'tempat-makan'], ['name' => 'Tempat Makan']);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        foreach (['Anak-anak', 'Dewasa', 'Air', 'Darat', 'Adrenaline', 'Santai'] as $label) {
+            $wahana->labels()->firstOrCreate(
+                ['slug' => str($label)->slug()->toString()],
+                ['name' => $label],
+            );
+        }
     }
 }

@@ -1,0 +1,1 @@
+<template><article class="overflow-hidden rounded-xl border border-[#e1e2eb] bg-white shadow-[0_1px_2px_rgba(0,0,0,.05)] transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"><slot /></article></template>

@@ -13,7 +13,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Nunito Sans', ...defaultTheme.fontFamily.sans],
+                heading: ['Fredoka', ...defaultTheme.fontFamily.sans],
                 caption: ['Be Vietnam Pro', 'sans-serif'],
                 'body-md': ['Be Vietnam Pro', 'sans-serif'],
                 'body-lg': ['Be Vietnam Pro', 'sans-serif'],
@@ -24,6 +25,9 @@ export default {
                 'label-bold': ['Be Vietnam Pro', 'sans-serif'],
             },
             colors: {
+                'primary-blue': '#00D2FC', 'primary-orange': '#FFA20D', 'primary-white': '#FFFFFF',
+                'secondary-pink': '#FA3E9F', 'secondary-yellow': '#FFFC00', 'secondary-green': '#006905',
+                'neutral-dark': '#1F2937', 'neutral-gray': '#6B7280',
                 background: '#f8f9fa', surface: '#f8f9fa', 'surface-container-low': '#f3f4f5',
                 'surface-container': '#edeeef', 'surface-container-highest': '#e1e3e4',
                 primary: '#003f87', 'primary-container': '#0056b3', 'primary-fixed': '#d7e2ff',
