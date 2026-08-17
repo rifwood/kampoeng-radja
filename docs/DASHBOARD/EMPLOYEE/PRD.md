@@ -1,0 +1,741 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+
+Modul Kelola Karyawan - Kampoeng Radja
+
+Versi requirement terbaru berdasarkan keputusan yang telah disepakati
+
+1. Ringkasan Modul
+
+Modul Kelola Karyawan merupakan modul internal untuk pengelolaan master data karyawan, jabatan, departemen, dan akun pengguna. Akses penuh hanya dimiliki oleh Super Admin. Admin dan User hanya memiliki menu Data Karyawan dengan hak baca terbatas pada atribut yang telah ditentukan.
+
+Item
+
+Keputusan
+
+Nama menu Super Admin
+
+Kelola Karyawan
+
+Submenu Super Admin
+
+Data Karyawan; Jabatan & Departemen
+
+Nama menu Admin/User
+
+Data Karyawan
+
+Akses Super Admin
+
+Lihat, tambah, edit, hapus karyawan; kelola jabatan & departemen; buat/kelola akun
+
+Akses Admin/User
+
+Read-only data karyawan dengan atribut terbatas
+
+Sumber jabatan/departemen pada form
+
+Dropdown dari tabel jabatan dan departemen
+
+Departemen
+
+Boleh kosong untuk jabatan yang tidak terikat departemen
+
+Tanggal keluar
+
+Boleh kosong untuk karyawan yang masih aktif
+
+2. Tujuan
+
+Menyediakan satu sumber data karyawan yang terstruktur dan konsisten.
+
+Memisahkan hak akses pengelolaan penuh Super Admin dari akses baca Admin dan User.
+
+Memastikan jabatan dan departemen dipilih dari master data, bukan diketik bebas pada form karyawan.
+
+Mendukung pembuatan akun pengguna yang terhubung satu-ke-satu dengan data karyawan.
+
+Melindungi atribut pribadi karyawan agar tidak seluruhnya terlihat oleh Admin dan User.
+
+3. Aktor dan Hak Akses
+
+Fitur
+
+Super Admin
+
+Admin
+
+User
+
+Lihat data karyawan umum
+
+Ya
+
+Ya
+
+Ya
+
+Lihat seluruh atribut karyawan
+
+Ya
+
+Tidak
+
+Tidak
+
+Tambah karyawan
+
+Ya
+
+Tidak
+
+Tidak
+
+Edit karyawan
+
+Ya
+
+Tidak
+
+Tidak
+
+Hapus karyawan
+
+Ya
+
+Tidak
+
+Tidak
+
+Akses Jabatan & Departemen
+
+Ya
+
+Tidak
+
+Tidak
+
+Tambah/Edit/Hapus Jabatan
+
+Ya
+
+Tidak
+
+Tidak
+
+Tambah/Edit/Hapus Departemen
+
+Ya
+
+Tidak
+
+Tidak
+
+Buat/Kelola akun
+
+Ya
+
+Tidak
+
+Tidak
+
+4. Struktur Navigasi
+
+Super Admin
+
+Kelola Karyawan
+
+Data Karyawan
+
+Jabatan & Departemen
+
+Admin dan User
+
+Data Karyawan
+
+Admin dan User tidak melihat menu Kelola Karyawan maupun submenu Jabatan & Departemen.
+
+5. Submenu Data Karyawan - Super Admin
+
+Tabel Data Karyawan menampilkan seluruh atribut berikut:
+
+No.
+
+Atribut
+
+Catatan
+
+1
+
+nama
+
+Wajib
+
+2
+
+nik
+
+Wajib dan unik
+
+3
+
+tanggal_lahir
+
+Wajib
+
+4
+
+tempat_lahir
+
+Wajib
+
+5
+
+jenis_kelamin
+
+L / P
+
+6
+
+alamat
+
+Data pribadi
+
+7
+
+agama
+
+ENUM sesuai daftar yang disepakati
+
+8
+
+status_perkawinan
+
+Data pribadi
+
+9
+
+pendidikan
+
+ENUM sesuai daftar yang disepakati
+
+10
+
+jabatan
+
+Diambil dari tabel jabatan
+
+11
+
+departemen
+
+Diambil dari tabel departemen; boleh kosong
+
+12
+
+status_keaktifan
+
+aktif / nonaktif
+
+13
+
+status_kerja
+
+Sesuai pilihan yang disepakati
+
+14
+
+tanggal_masuk
+
+Wajib
+
+15
+
+tanggal_keluar
+
+Boleh kosong
+
+16
+
+no_hp
+
+Data pribadi
+
+17
+
+foto_ktp
+
+Path file; boleh kosong
+
+6. Fitur Tambah Karyawan
+
+Hanya Super Admin yang dapat menambahkan karyawan baru.
+
+Super Admin membuka Kelola Karyawan > Data Karyawan.
+
+Super Admin memilih aksi Tambah Karyawan.
+
+Sistem menampilkan form input data karyawan lengkap.
+
+Field Jabatan menampilkan pilihan dari tabel jabatan.
+
+Field Departemen menampilkan pilihan dari tabel departemen dan boleh dikosongkan.
+
+Super Admin mengisi seluruh data wajib dan menyimpan form.
+
+Sistem melakukan validasi dan menyimpan data karyawan jika seluruh ketentuan terpenuhi.
+
+Setelah data karyawan berhasil dibuat, sistem menyediakan opsi untuk membuat akun karyawan sekarang atau nanti.
+
+7. Form Tambah/Edit Karyawan
+
+Field
+
+Tipe Input
+
+Aturan
+
+nama
+
+Text
+
+Wajib
+
+nik
+
+Text
+
+Wajib, unik, maksimal 20 karakter
+
+tanggal_lahir
+
+Date
+
+Wajib
+
+tempat_lahir
+
+Text
+
+Wajib
+
+jenis_kelamin
+
+Select/Radio
+
+L atau P
+
+alamat
+
+Textarea
+
+Wajib sesuai kebijakan data perusahaan
+
+agama
+
+Select
+
+Dari nilai ENUM
+
+status_perkawinan
+
+Select
+
+Dari nilai ENUM
+
+pendidikan
+
+Select
+
+Dari nilai ENUM
+
+jabatan_id
+
+Select
+
+Sumber: tabel jabatan; wajib
+
+departemen_id
+
+Select
+
+Sumber: tabel departemen; boleh kosong
+
+status_keaktifan
+
+Select
+
+aktif / nonaktif
+
+status_kerja
+
+Select
+
+Dari nilai ENUM
+
+tanggal_masuk
+
+Date
+
+Wajib
+
+tanggal_keluar
+
+Date
+
+Boleh kosong
+
+no_hp
+
+Text
+
+VARCHAR; tidak diperlakukan sebagai angka matematika
+
+foto_ktp
+
+File Upload
+
+Gambar disimpan di storage; database menyimpan path
+
+8. Fitur Edit Karyawan
+
+Hanya Super Admin yang dapat mengedit data karyawan.
+
+Form edit menggunakan struktur field yang sama dengan form tambah.
+
+Jabatan dan departemen tetap menggunakan master data sebagai sumber pilihan.
+
+Departemen tetap boleh kosong.
+
+Tanggal keluar tetap boleh kosong.
+
+Perubahan status_keaktifan menjadi nonaktif perlu dihubungkan dengan status akun agar karyawan yang tidak aktif tidak dapat login.
+
+9. Fitur Hapus Karyawan
+
+Hanya Super Admin yang dapat menghapus data karyawan.
+
+Sistem wajib meminta konfirmasi sebelum penghapusan.
+
+Sistem harus memeriksa relasi data sebelum menghapus agar tidak merusak integritas referensial.
+
+Jika karyawan sudah memiliki data yang direferensikan modul lain (misalnya akun atau absensi), kebijakan penghapusan final perlu ditetapkan sebelum implementasi produksi.
+
+10. Submenu Jabatan & Departemen - Super Admin
+
+Halaman ini menampilkan dua tabel master pada satu submenu.
+
+10.1 Tabel Jabatan
+
+Kolom
+
+Keterangan
+
+nama_jabatan
+
+Nama jabatan; unik
+
+aksi
+
+Edit dan Hapus
+
+Tersedia fitur Tambah Jabatan.
+
+Tersedia aksi Edit Jabatan.
+
+Tersedia aksi Hapus Jabatan.
+
+Jabatan yang masih digunakan oleh karyawan tidak boleh dihapus tanpa penanganan relasi terlebih dahulu.
+
+10.2 Tabel Departemen
+
+Kolom
+
+Keterangan
+
+nama_departemen
+
+Nama departemen; unik
+
+aksi
+
+Edit dan Hapus
+
+Tersedia fitur Tambah Departemen.
+
+Tersedia aksi Edit Departemen.
+
+Tersedia aksi Hapus Departemen.
+
+Departemen yang masih digunakan oleh karyawan tidak boleh dihapus tanpa penanganan relasi terlebih dahulu.
+
+11. Tampilan Data Karyawan - Admin dan User
+
+Admin dan User memiliki hak yang sama pada menu Data Karyawan: hanya melihat daftar karyawan tanpa aksi tambah, edit, hapus, atau akses master Jabatan & Departemen.
+
+Atribut yang Ditampilkan
+
+Keterangan
+
+nama
+
+Ditampilkan
+
+jenis_kelamin
+
+Ditampilkan
+
+agama
+
+Ditampilkan
+
+tanggal_lahir
+
+Ditampilkan
+
+tempat_lahir
+
+Ditampilkan
+
+pendidikan
+
+Ditampilkan
+
+jabatan
+
+Ditampilkan
+
+departemen
+
+Ditampilkan; dapat kosong
+
+status_kerja
+
+Ditampilkan
+
+status_keaktifan
+
+Ditampilkan
+
+tanggal_masuk
+
+Ditampilkan
+
+tanggal_keluar
+
+Ditampilkan; dapat kosong
+
+Atribut berikut tidak ditampilkan kepada Admin dan User:
+
+nik
+
+alamat
+
+status_perkawinan
+
+no_hp
+
+foto_ktp
+
+12. Pembuatan dan Pengelolaan Akun Karyawan
+
+Pembuatan akun dilakukan setelah data karyawan tersedia. Satu karyawan hanya boleh memiliki satu akun karena users.karyawan_id bersifat UNIQUE.
+
+Super Admin memilih karyawan yang belum memiliki akun.
+
+Super Admin memilih aksi Buat Akun.
+
+Sistem mengikat akun ke karyawan_id yang dipilih.
+
+Super Admin menentukan username yang unik.
+
+Role akun ditentukan sesuai aturan jabatan: Dirut/Direktur/Admin Sistem = super_admin; Manajer/Supervisor = admin; Mitra/Operasional/Facility = user.
+
+Super Admin membuat PIN awal sementara 6 digit dan melakukan konfirmasi PIN.
+
+Sistem menyimpan PIN dalam bentuk hash, bukan nilai asli.
+
+Akun baru diberi must_change_pin = true.
+
+Pada login pertama, pengguna wajib mengganti PIN sebelum dapat melanjutkan ke Dashboard.
+
+Setelah berhasil mengganti PIN, must_change_pin diubah menjadi false.
+
+Field Users
+
+Field Users
+
+Ketentuan
+
+karyawan_id
+
+FK dan UNIQUE
+
+role_id
+
+FK ke role
+
+username
+
+UNIQUE
+
+pin
+
+VARCHAR(255), berisi hash
+
+is_active
+
+Status akses login akun
+
+must_change_pin
+
+BOOLEAN; true pada akun baru/PIN sementara
+
+created_at
+
+Timestamp
+
+updated_at
+
+Timestamp
+
+13. Aturan Role Saat Pembuatan Akun
+
+Jabatan
+
+Role
+
+Dirut
+
+super_admin
+
+Direktur
+
+super_admin
+
+Admin Sistem
+
+super_admin
+
+Manajer
+
+admin
+
+Supervisor
+
+admin
+
+Mitra
+
+user
+
+Operasional (OPS)
+
+user
+
+Facility (FLT)
+
+user
+
+14. Tabel Database yang Digunakan
+
+Tabel
+
+Peran dalam Modul
+
+karyawan
+
+Menyimpan master data karyawan
+
+jabatan
+
+Master pilihan jabatan
+
+departemen
+
+Master pilihan departemen
+
+users
+
+Akun login yang terhubung ke karyawan
+
+role
+
+Tingkat akses akun
+
+15. Aturan Bisnis Utama
+
+NIK wajib unik.
+
+Satu karyawan hanya boleh memiliki satu akun.
+
+departemen_id boleh NULL.
+
+tanggal_keluar boleh NULL.
+
+foto_ktp menyimpan path file, bukan binary gambar.
+
+Hanya Super Admin yang dapat melakukan operasi tulis pada data karyawan, jabatan, dan departemen.
+
+Admin dan User hanya mendapatkan read-only view dengan atribut terbatas.
+
+Jabatan dan departemen tidak diinput bebas pada form karyawan; keduanya harus berasal dari master data.
+
+PIN awal harus di-hash dan tidak boleh disimpan dalam plaintext.
+
+Pengguna wajib mengganti PIN sementara saat login pertama.
+
+Akun karyawan nonaktif harus dapat dinonaktifkan agar tidak dapat melakukan login.
+
+16. Validasi Minimum
+
+nik tidak boleh duplikat.
+
+username tidak boleh duplikat.
+
+karyawan_id pada users tidak boleh duplikat.
+
+jabatan_id harus mengarah ke jabatan yang tersedia.
+
+departemen_id, jika diisi, harus mengarah ke departemen yang tersedia.
+
+tanggal_keluar tidak boleh lebih awal dari tanggal_masuk.
+
+PIN awal harus tepat 6 digit sebelum di-hash.
+
+Konfirmasi PIN harus sama dengan PIN yang dimasukkan.
+
+File foto KTP harus divalidasi sebagai file gambar dengan batas ukuran yang akan ditentukan pada implementasi.
+
+17. Acceptance Criteria
+
+Super Admin dapat melihat seluruh atribut karyawan.
+
+Super Admin dapat menambah, mengedit, dan menghapus karyawan sesuai aturan relasi.
+
+Pilihan jabatan dan departemen pada form berasal dari tabel master.
+
+Super Admin dapat menambah, mengedit, dan menghapus master jabatan dan departemen dengan proteksi referensi.
+
+Admin dan User hanya melihat atribut karyawan yang telah ditentukan dan tidak melihat data pribadi yang dikecualikan.
+
+Admin dan User tidak melihat aksi tambah, edit, hapus, atau menu Jabatan & Departemen.
+
+Super Admin dapat membuat akun untuk karyawan yang belum memiliki akun.
+
+Sistem mencegah satu karyawan memiliki lebih dari satu akun.
+
+PIN akun baru disimpan sebagai hash dan pengguna diwajibkan mengganti PIN sementara pada login pertama.
+
+Karyawan dengan departemen kosong dan tanggal keluar kosong dapat disimpan dengan valid.
+
+18. Out of Scope / Belum Dikunci
+
+Riwayat jabatan belum digunakan pada fase ini.
+
+Soft delete vs hard delete untuk karyawan belum diputuskan final.
+
+Batas ukuran dan format file foto KTP akan ditetapkan pada implementasi.
+
+Detail audit log perubahan data karyawan belum dirancang sebagai tabel terpisah.
+
+KPI, Closing Event, Attendance, dan CMS berada di PRD/modul terpisah.

@@ -1,0 +1,283 @@
+<?php
+
+namespace App\Http\Controllers\Employee;
+
+use App\Actions\Employee\CreateEmployee;
+use App\Actions\Employee\DeactivateEmployee;
+use App\Actions\Employee\DeleteEmployee;
+use App\Actions\Employee\ProcessEmployeeExit;
+use App\Actions\Employee\ResolveEmployeeAccountRole;
+use App\Actions\Employee\UpdateEmployee;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Employee\ExitEmployeeRequest;
+use App\Http\Requests\Employee\StoreEmployeeRequest;
+use App\Http\Requests\Employee\UpdateEmployeeRequest;
+use App\Models\Departemen;
+use App\Models\Jabatan;
+use App\Models\Karyawan;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+class EmployeeController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        [$roleName, $authEmployee] = $this->accessContext($request);
+        $query = $this->scopedQuery($roleName, $authEmployee);
+
+        if ($roleName !== 'user') {
+            $search = trim($request->string('search')->toString());
+            if ($search !== '') {
+                $query->where(function (Builder $builder) use ($search, $roleName): void {
+                    $builder->where('nama', 'like', "%{$search}%");
+                    if ($roleName === 'super_admin') {
+                        $builder->orWhere('nik', 'like', "%{$search}%");
+                    }
+                });
+            }
+
+            foreach (['jabatan_id', 'status_keaktifan', 'status_kerja'] as $filter) {
+                if ($request->filled($filter)) {
+                    $query->where($filter, $request->input($filter));
+                }
+            }
+            if ($roleName === 'super_admin' && $request->filled('departemen_id')) {
+                $query->where('departemen_id', $request->integer('departemen_id'));
+            }
+        }
+
+        $employees = $query
+            ->with(['jabatan:id,nama_jabatan', 'departemen:id,nama_departemen'])
+            ->orderBy('nama')
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (Karyawan $employee): array => $this->employeeListPayload($employee, $roleName));
+
+        return Inertia::render('Internal/Employee/Index', [
+            'employees' => $employees,
+            'filters' => [
+                'search' => $roleName === 'user' ? '' : $request->string('search')->toString(),
+                'jabatan_id' => $request->input('jabatan_id'),
+                'departemen_id' => $roleName === 'super_admin' ? $request->input('departemen_id') : null,
+                'status_keaktifan' => $request->input('status_keaktifan'),
+                'status_kerja' => $request->input('status_kerja'),
+            ],
+            'masterData' => [
+                'jabatan' => Jabatan::query()->orderBy('nama_jabatan')->get(['id', 'nama_jabatan']),
+                'departemen' => $roleName === 'super_admin'
+                    ? Departemen::query()->orderBy('nama_departemen')->get(['id', 'nama_departemen'])
+                    : [],
+            ],
+            'permissions' => [
+                'roleName' => $roleName,
+                'canManage' => $roleName === 'super_admin',
+                'canSearch' => $roleName !== 'user',
+                'canManageMasters' => $roleName === 'super_admin',
+            ],
+            'user' => $this->userPayload($request),
+        ]);
+    }
+
+    public function create(Request $request): Response
+    {
+        return Inertia::render('Internal/Employee/Create', [
+            'masterData' => $this->formMasterData(),
+            'user' => $this->userPayload($request),
+        ]);
+    }
+
+    public function store(StoreEmployeeRequest $request, CreateEmployee $action): RedirectResponse
+    {
+        $employee = $action->handle($request->validated(), $request->file('foto_ktp'));
+
+        return to_route('dashboard.karyawan.show', $employee)->with('success', 'Karyawan berhasil ditambahkan.');
+    }
+
+    public function show(Request $request, Karyawan $karyawan, ResolveEmployeeAccountRole $roleResolver): Response
+    {
+        [$roleName, $authEmployee] = $this->accessContext($request);
+        $employee = $this->scopedQuery($roleName, $authEmployee)
+            ->with(['jabatan:id,nama_jabatan', 'departemen:id,nama_departemen', 'user.role:id,nama_role'])
+            ->findOrFail($karyawan->id);
+
+        return Inertia::render('Internal/Employee/Show', [
+            'employee' => $this->employeeDetailPayload($employee, $roleName, $roleResolver),
+            'permissions' => [
+                'roleName' => $roleName,
+                'canManage' => $roleName === 'super_admin',
+                'canDelete' => $roleName === 'super_admin' && ! $employee->user()->exists() && ! $employee->absensi()->exists(),
+                'canManageMasters' => $roleName === 'super_admin',
+                'canManageAccount' => $roleName === 'super_admin',
+            ],
+            'user' => $this->userPayload($request),
+        ]);
+    }
+
+    public function edit(Request $request, Karyawan $karyawan): Response
+    {
+        $karyawan->load(['jabatan:id,nama_jabatan', 'departemen:id,nama_departemen']);
+
+        return Inertia::render('Internal/Employee/Edit', [
+            'employee' => $this->employeeDetailPayload($karyawan, 'super_admin'),
+            'masterData' => $this->formMasterData(),
+            'user' => $this->userPayload($request),
+        ]);
+    }
+
+    public function update(UpdateEmployeeRequest $request, Karyawan $karyawan, UpdateEmployee $action): RedirectResponse
+    {
+        $action->handle($karyawan, $request->validated(), $request->file('foto_ktp'));
+
+        return to_route('dashboard.karyawan.show', $karyawan)->with('success', 'Data karyawan berhasil diperbarui.');
+    }
+
+    public function deactivate(Karyawan $karyawan, DeactivateEmployee $action): RedirectResponse
+    {
+        $action->handle($karyawan);
+
+        return back()->with('success', 'Karyawan dan akun terkait berhasil dinonaktifkan.');
+    }
+
+    public function processExit(ExitEmployeeRequest $request, Karyawan $karyawan, ProcessEmployeeExit $action): RedirectResponse
+    {
+        $action->handle($karyawan, $request->validated('tanggal_keluar'));
+
+        return back()->with('success', 'Karyawan keluar berhasil diproses.');
+    }
+
+    public function destroy(Karyawan $karyawan, DeleteEmployee $action): RedirectResponse
+    {
+        $action->handle($karyawan);
+
+        return to_route('dashboard.karyawan.index')->with('success', 'Data karyawan berhasil dihapus permanen.');
+    }
+
+    public function photo(Request $request, Karyawan $karyawan): StreamedResponse
+    {
+        abort_unless($request->user()?->role()->value('nama_role') === 'super_admin', 403);
+        abort_unless($karyawan->foto_ktp && Storage::disk('local')->exists($karyawan->foto_ktp), 404);
+
+        return Storage::disk('local')->response($karyawan->foto_ktp);
+    }
+
+    /** @return array{0:string,1:Karyawan} */
+    private function accessContext(Request $request): array
+    {
+        $user = $request->user()->loadMissing(['role:id,nama_role', 'karyawan']);
+        abort_unless($user->role && $user->karyawan, 403);
+        $roleName = mb_strtolower($user->role->nama_role);
+        abort_unless(in_array($roleName, ['super_admin', 'admin', 'user'], true), 403);
+
+        return [$roleName, $user->karyawan];
+    }
+
+    private function scopedQuery(string $roleName, Karyawan $authEmployee): Builder
+    {
+        $query = Karyawan::query();
+
+        if ($roleName === 'admin') {
+            return $authEmployee->departemen_id
+                ? $query->where('departemen_id', $authEmployee->departemen_id)
+                : $query->whereRaw('1 = 0');
+        }
+
+        if ($roleName === 'user') {
+            return $query->whereKey($authEmployee->id);
+        }
+
+        return $query;
+    }
+
+    private function employeeListPayload(Karyawan $employee, string $roleName): array
+    {
+        return array_filter([
+            'id' => $employee->id,
+            'name' => $employee->nama,
+            'nik' => $roleName === 'super_admin' ? $employee->nik : null,
+            'position' => $employee->jabatan?->nama_jabatan,
+            'department' => $employee->departemen?->nama_departemen,
+            'employmentStatus' => $employee->status_kerja,
+            'activeStatus' => $employee->status_keaktifan,
+        ], fn ($value, $key) => $key !== 'nik' || $roleName === 'super_admin', ARRAY_FILTER_USE_BOTH);
+    }
+
+    private function employeeDetailPayload(
+        Karyawan $employee,
+        string $roleName,
+        ?ResolveEmployeeAccountRole $roleResolver = null,
+    ): array {
+        $payload = [
+            'id' => $employee->id,
+            'name' => $employee->nama,
+            'birthDate' => $employee->tanggal_lahir?->toDateString(),
+            'birthPlace' => $employee->tempat_lahir,
+            'gender' => $employee->jenis_kelamin,
+            'religion' => $employee->agama,
+            'education' => $employee->pendidikan,
+            'positionId' => $employee->jabatan_id,
+            'position' => $employee->jabatan?->nama_jabatan,
+            'departmentId' => $employee->departemen_id,
+            'department' => $employee->departemen?->nama_departemen,
+            'activeStatus' => $employee->status_keaktifan,
+            'employmentStatus' => $employee->status_kerja,
+            'joinedAt' => $employee->tanggal_masuk?->toDateString(),
+            'leftAt' => $employee->tanggal_keluar?->toDateString(),
+        ];
+
+        if ($roleName === 'super_admin') {
+            $account = $employee->user;
+            $suggestedRole = $account ? null : $roleResolver?->handle($employee->jabatan?->nama_jabatan);
+
+            $payload += [
+                'nik' => $employee->nik,
+                'address' => $employee->alamat,
+                'maritalStatus' => $employee->status_perkawinan,
+                'phone' => $employee->no_hp,
+                'hasKtpPhoto' => filled($employee->foto_ktp),
+                'ktpPhotoUrl' => filled($employee->foto_ktp) ? route('dashboard.karyawan.photo', $employee) : null,
+                'account' => $account
+                    ? [
+                        'username' => $account->username,
+                        'roleName' => mb_strtolower($account->role?->nama_role ?? ''),
+                        'roleLabel' => str($account->role?->nama_role ?? 'Tanpa role')->replace('_', ' ')->title()->toString(),
+                        'isActive' => (bool) $account->is_active,
+                        'mustChangePin' => (bool) $account->must_change_pin,
+                    ]
+                    : null,
+                'accountRole' => $suggestedRole,
+                'accountRoleLabel' => $suggestedRole
+                    ? str($suggestedRole)->replace('_', ' ')->title()->toString()
+                    : null,
+            ];
+        }
+
+        return $payload;
+    }
+
+    private function formMasterData(): array
+    {
+        return [
+            'jabatan' => Jabatan::query()->orderBy('nama_jabatan')->get(['id', 'nama_jabatan']),
+            'departemen' => Departemen::query()->orderBy('nama_departemen')->get(['id', 'nama_departemen']),
+        ];
+    }
+
+    private function userPayload(Request $request): array
+    {
+        $user = $request->user()->loadMissing(['role:id,nama_role', 'karyawan:id,nama']);
+        $name = $user->karyawan?->nama ?? $user->username;
+        $roleName = mb_strtolower($user->role?->nama_role ?? '');
+
+        return [
+            'name' => $name,
+            'initials' => collect(preg_split('/\s+/', trim($name)))->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode(''),
+            'roleName' => $roleName,
+            'roleLabel' => str($roleName)->replace('_', ' ')->title()->toString(),
+        ];
+    }
+}

@@ -11,11 +11,13 @@ The project is developed in multiple phases:
 - Phase 2 — Employee KPI System
 - Phase 3 — Closing Event Marketing System
 
-Current development priority:
+Current development workstreams:
 
-> **PHASE 1 — LANDING PAGE / COMPANY PROFILE**
+> **LANDING PAGE / COMPANY PROFILE — active, incomplete**
 
-Do not implement Phase 2 or Phase 3 unless explicitly instructed and supported by active requirements.
+> **DASHBOARD INTERNAL FOUNDATION — active only for documented modules**
+
+Dashboard modules currently documented as active are Data Absensi and preparation for Kelola Karyawan. KPI and Closing Event remain inactive and must not be implemented unless explicitly activated with requirements.
 
 ---
 
@@ -31,28 +33,40 @@ Read in this order:
 2. `docs/GLOBAL/TECH_STACK.md`
 3. `docs/GLOBAL/BRAND_GUIDELINE.md`
 4. `docs/GLOBAL/ARCHITECTURE.md`
-5. `docs/GLOBAL/AGENT_RULES.md`
+5. `docs/GLOBAL/ACCESS_CONTROL.md` when access/auth is relevant
+6. `docs/GLOBAL/ACCESS_CONTROL_MATRIX.md` when access/auth is relevant
+7. `docs/GLOBAL/AGENT_RULES.md`
 
 ## Phase 1 Documentation
 
 Read in this order:
 
-6. `docs/LANDING-PAGE/PRD.md`
-7. `docs/LANDING-PAGE/FIGMA.md`
-8. `docs/LANDING-PAGE/FIGMA_ACCURACY.md`
-9. `docs/LANDING-PAGE/UI_SPEC.md`
-10. `docs/LANDING-PAGE/USER_FLOW.md`
-11. `docs/LANDING-PAGE/COMPONENTS.md`
-12. `docs/LANDING-PAGE/RESPONSIVE.md`
-13. `docs/LANDING-PAGE/CONTENT.md`
-14. `docs/LANDING-PAGE/ASSETS.md`
-15. `docs/LANDING-PAGE/REFERENCE.md`
-16. `docs/LANDING-PAGE/TODO.md`
-17. `docs/LANDING-PAGE/AGENT_HANDOFF.md`
+8. `docs/LANDING-PAGE/PRD.md`
+9. `docs/LANDING-PAGE/FIGMA.md`
+10. `docs/LANDING-PAGE/FIGMA_ACCURACY.md`
+11. `docs/LANDING-PAGE/UI_SPEC.md`
+12. `docs/LANDING-PAGE/USER_FLOW.md`
+13. `docs/LANDING-PAGE/COMPONENTS.md`
+14. `docs/LANDING-PAGE/RESPONSIVE.md`
+15. `docs/LANDING-PAGE/CONTENT.md`
+16. `docs/LANDING-PAGE/ASSETS.md`
+17. `docs/LANDING-PAGE/REFERENCE.md`
+18. `docs/LANDING-PAGE/TODO.md`
+19. `docs/LANDING-PAGE/AGENT_HANDOFF.md`
 
 Before release/review also read:
 
-18. `docs/LANDING-PAGE/DELIVERY_CHECKLIST.md`
+20. `docs/LANDING-PAGE/DELIVERY_CHECKLIST.md`
+
+## Dashboard Documentation
+
+Before changing Dashboard code, read:
+
+1. `docs/DASHBOARD/README.md`
+2. the module `PRD.md`, `PERMISSIONS.md`, and `UI_SPEC.md` when available
+3. approved files under the module `references/`
+
+If a module document is missing or marked `TBD`, do not invent business rules or permissions.
 
 If required content is missing, do not invent it.
 
@@ -811,9 +825,11 @@ Visual status: NOT VERIFIED AGAINST FIGMA.
 
 # 30. Phase Boundary
 
-Current phase:
+Current active scope:
 
-> **PHASE 1 — LANDING PAGE**
+> **LANDING PAGE FASE 1 + DOCUMENTED DASHBOARD FOUNDATION**
+
+Dashboard work is allowed only for modules explicitly documented under `docs/DASHBOARD/` or directly activated by the stakeholder.
 
 Do NOT implement:
 
@@ -827,7 +843,7 @@ Do NOT implement:
 - Phase 2/3 business logic
 - speculative Phase 2/3 database tables
 
-unless explicitly instructed under an active phase change.
+unless explicitly instructed with active requirements. Data Absensi and Kelola Karyawan documentation do not activate KPI or Closing Event.
 
 ---
 

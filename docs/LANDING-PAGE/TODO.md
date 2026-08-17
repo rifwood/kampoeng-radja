@@ -3,6 +3,22 @@
 
 Dokumen ini mencatat pekerjaan yang **masih harus dilakukan**, blocker, klarifikasi, deviasi, dan QA untuk Fase 1.
 
+> **Rebaseline 15 Agustus 2026:** status implementasi aktual diringkas di `LOG.md`. Checklist di file ini adalah backlog requirement/QA Landing Page; item fungsional hanya dicentang jika memiliki bukti source/test, sedangkan item visual tetap terbuka sampai QA Figma dilakukan.
+
+## Snapshot Implementasi Saat Rebaseline
+
+| Area | Status aktual | Pekerjaan tersisa utama |
+| --- | --- | --- |
+| Halaman publik | `PARTIAL` | Visual/content/asset QA dan CMS minimum belum lengkap |
+| Authentication | `IMPLEMENTED` | Destination setelah login masih perlu keputusan |
+| Media & Berita admin | `IMPLEMENTED` | Detail page tetap di luar scope sampai diputuskan |
+| Event Promo admin | `IMPLEMENTED` | Verifikasi asset/content production |
+| Wahana guest | `PARTIAL` | Filter AND bekerja; data category/label dinamis dan CRUD admin belum sesuai PRD |
+| Galeri Event guest | `PARTIAL` | Display/sort tersedia; CRUD admin belum ada |
+| Mitra | `PARTIAL` | Public read tersedia; CRUD/asset resmi belum lengkap |
+
+Dashboard Internal dan Absensi dilacak di `docs/DASHBOARD/` dan `LOG.md`, bukan di backlog Landing Page ini.
+
 > **Prinsip utama:**  
 > `TODO.md` bukan tempat menyimpan requirement lama yang sudah tidak berlaku.
 >
@@ -130,19 +146,19 @@ Keputusan stakeholder:
 
 Sebelum implementasi ulang:
 
-- [ ] Audit `routes/web.php`
-- [ ] Audit `resources/js/Pages/`
-- [ ] Audit `resources/js/Components/`
-- [ ] Audit `resources/js/Layouts/`
-- [ ] Audit controller existing
-- [ ] Audit model existing
-- [ ] Audit migration existing
-- [ ] Audit seeders/factories
-- [ ] Audit auth existing
+- [x] Audit `routes/web.php`
+- [x] Audit `resources/js/Pages/`
+- [x] Audit `resources/js/Components/`
+- [x] Audit `resources/js/Layouts/`
+- [x] Audit controller existing
+- [x] Audit model existing
+- [x] Audit migration existing
+- [x] Audit seeders/factories
+- [x] Audit auth existing
 - [ ] Audit Tailwind config
 - [ ] Audit font loading
-- [ ] Audit package/dependency
-- [ ] Audit asset existing
+- [x] Audit package/dependency
+- [x] Audit asset existing
 - [ ] Audit apakah ada code lama yang harus dipertahankan atau dibuang
 
 Tujuan:
@@ -173,7 +189,7 @@ Untuk setiap entity, cek PRD dulu.
 
 Setelah kebutuhan jelas:
 
-- [ ] Review migration existing
+- [x] Review migration existing
 - [ ] Buat/perbaiki migration hanya bila perlu
 - [ ] Tambahkan foreign key/index yang relevan
 - [ ] Pastikan tidak ada tabel Fase 2/3 yang dibuat spekulatif
@@ -182,11 +198,11 @@ Setelah kebutuhan jelas:
 
 # 8. Routing & Page Scope
 
-- [ ] Verifikasi route Beranda
-- [ ] Verifikasi route Tentang Kami
-- [ ] Verifikasi route Wahana
-- [ ] Verifikasi route Galeri Event
-- [ ] Verifikasi route Login
+- [x] Verifikasi route Beranda
+- [x] Verifikasi route Tentang Kami
+- [x] Verifikasi route Wahana
+- [x] Verifikasi route Galeri Event
+- [x] Verifikasi route Login
 - [ ] Pastikan tidak ada route publik tambahan tanpa PRD
 - [ ] Pastikan Detail Media & Berita belum dibuat sebelum keputusan scope
 
@@ -300,12 +316,12 @@ Frame:
 ## Fungsi
 
 - [ ] Category/label berasal dari data dinamis
-- [ ] Multi-label selection berfungsi
-- [ ] Logika AND berfungsi
-- [ ] Toggle label berfungsi
-- [ ] Cari berfungsi jika UI final tetap menggunakan pola apply
-- [ ] Reset berfungsi
-- [ ] Empty result aman
+- [x] Multi-label selection berfungsi
+- [x] Logika AND berfungsi
+- [x] Toggle label berfungsi
+- [x] Cari berfungsi jika UI final tetap menggunakan pola apply
+- [x] Reset berfungsi
+- [x] Empty result aman
 - [ ] Filter lintas kategori siap secara model data
 
 ## Admin
@@ -344,11 +360,11 @@ Frame:
 
 ## Fungsi
 
-- [ ] Event data tampil
-- [ ] Sorting Terbaru berfungsi
-- [ ] Sorting Terlama berfungsi
-- [ ] Empty state aman
-- [ ] Foto event tampil
+- [x] Event data tampil
+- [x] Sorting Terbaru berfungsi
+- [x] Sorting Terlama berfungsi
+- [x] Empty state aman
+- [x] Foto event tampil
 - [ ] Lightbox/detail jika termasuk desain
 
 ## Admin
@@ -371,10 +387,10 @@ Frame:
 
 ## List / Section Beranda
 
-- [ ] Verifikasi data source
-- [ ] Verifikasi admin CRUD
-- [ ] Verifikasi thumbnail
-- [ ] Verifikasi content fields
+- [x] Verifikasi data source
+- [x] Verifikasi admin CRUD
+- [x] Verifikasi thumbnail
+- [x] Verifikasi content fields
 
 ## Detail Page
 
@@ -390,8 +406,8 @@ Jangan membuat page detail sebelum keputusan ini dibuat.
 
 Jika tetap termasuk scope:
 
-- [ ] Verifikasi fields
-- [ ] Verifikasi CRUD admin
+- [x] Verifikasi fields sesuai schema final `event_promo`
+- [x] Verifikasi CRUD admin
 - [ ] Verifikasi active period
 - [ ] Verifikasi asset
 - [ ] Verifikasi display Figma
@@ -413,11 +429,11 @@ Tidak ada kewajiban auto-scroll/pause/drag kecuali behavior final menetapkannya.
 
 # 17. Authentication
 
-- [ ] Verifikasi login existing
-- [ ] Pastikan login untuk user internal
-- [ ] Pastikan guest tetap dapat mengakses halaman publik
-- [ ] Verifikasi role dasar
-- [ ] Pastikan user tanpa hak tidak dapat mengelola content
+- [x] Verifikasi login existing
+- [x] Pastikan login untuk user internal
+- [x] Pastikan guest tetap dapat mengakses halaman publik
+- [x] Verifikasi role dasar
+- [x] Pastikan user tanpa hak tidak dapat mengelola content
 
 Jangan membuat dashboard KPI/Closing Event sebagai placeholder yang seolah sudah bagian produk.
 
@@ -431,17 +447,17 @@ Jika perlu destination setelah login dan sistem internal belum siap:
 
 Scope PRD saat ini mencakup admin content minimum.
 
-- [ ] Tentukan struktur route admin
-- [ ] Tentukan layout admin minimum
+- [x] Tentukan struktur route admin
+- [x] Tentukan layout admin minimum
 - [ ] Tentukan content modules yang benar-benar wajib
 - [ ] Implement Wahana management
 - [ ] Implement Galeri Event management
-- [ ] Implement Media & Berita management jika aktif
-- [ ] Implement Promo management jika aktif
+- [x] Implement Media & Berita management jika aktif
+- [x] Implement Promo management jika aktif
 - [ ] Implement Mitra management jika aktif
-- [ ] Authorization admin/super admin
-- [ ] Validation
-- [ ] Upload/media handling
+- [x] Authorization admin/super admin
+- [x] Validation untuk modul Media & Berita serta Event & Promotion
+- [x] Upload/media handling untuk modul Media & Berita serta Event & Promotion
 
 ---
 
@@ -619,8 +635,8 @@ Status final:
 
 Setelah perubahan besar:
 
-- [ ] Frontend build berhasil
-- [ ] Backend test relevan berhasil
+- [x] Frontend build berhasil — `npm.cmd run build`, 15 Agustus 2026
+- [x] Backend test relevan berhasil — 50 test / 405 assertions, 15 Agustus 2026
 - [ ] Tidak ada runtime error
 - [ ] Tidak ada console error utama
 - [ ] Route utama diuji
@@ -743,36 +759,26 @@ Jika nanti memang diperlukan, tambahkan kembali dengan dasar requirement yang je
 
 # 34. Prioritas Pengerjaan Saat Ini
 
-Urutan yang disarankan:
+Prioritas Landing Page setelah rebaseline:
 
-## P0 — Wajib sebelum UI ulang
+## P0 — Requirement/data mismatch
 
-1. Lengkapi mapping node section di `FIGMA.md`
-2. Audit existing code
-3. Audit asset Figma
-4. Sinkronkan `UI_SPEC.md`
-5. Sinkronkan `USER_FLOW.md`
+1. Putuskan apakah schema Wahana boleh dikembangkan untuk category/label/assignment dinamis.
+2. Putuskan scope Detail Media & Berita node `1:650`.
+3. Lengkapi inventaris konten/aset production dan status placeholder.
 
-## P1 — Implementasi visual
+## P1 — CMS minimum
 
-6. Shared Navbar/Footer
-7. Beranda
-8. Tentang Kami
-9. Wahana
-10. Galeri Event
+4. Wahana/category/label management setelah keputusan schema.
+5. Galeri Event/foto management.
+6. Mitra management dan Site Settings bila dikonfirmasi.
 
-## P2 — Backend/content management
+## P2 — Visual/release QA
 
-11. Pastikan data model sesuai PRD
-12. Admin minimum
-13. Content/asset intake
-
-## P3 — QA
-
-14. Desktop Figma QA
-15. Responsive fallback QA
-16. Accessibility/performance/SEO
-17. Delivery checklist
+7. Lengkapi mapping child node Figma.
+8. Desktop side-by-side/overlay untuk empat frame utama.
+9. Responsive fallback, accessibility, performance, dan SEO QA.
+10. Perbarui `DELIVERY_CHECKLIST.md` berdasarkan bukti aktual.
 
 ---
 
@@ -805,8 +811,9 @@ Delivery
 - Semua deklarasi `url(.jpg)` pada ekspor tidak memuat URL atau file gambar nyata. Area tersebut memakai aset lokal yang sudah tersedia atau placeholder terdokumentasi sampai aset diberikan.
 - Desktop belum dapat disebut Figma verified; CSS export tidak menggantikan QA overlay terhadap frame Figma.
 - Beranda memakai `public/assets/temporary/hero-waterpark-v2.png` sebagai `[FIGMA SEMENTARA]` sampai aset video hero diterima. Aset ini adalah versi yang dibersihkan dari floating bar bawaan gambar atas instruksi stakeholder.
-- Promo carousel memakai banner generatif sementara di `public/assets/temporary/` atas instruksi stakeholder. Nomor WhatsApp tiap promo belum tersedia; field `promotions.whatsapp_number` disiapkan, tetapi tombol detail tetap nonaktif sampai konten resmi diterima.
+- Promo carousel memakai dua banner sementara di `public/assets/promotions/` atas instruksi stakeholder. Data CMS kini berasal dari schema final `event_promo`; `link_wa` bersifat opsional dan tombol detail nonaktif secara aman bila nilainya belum tersedia.
 - Footer memakai alamat, telepon, email, dan deskripsi yang disediakan pada screenshot stakeholder sebagai `[FIGMA SEMENTARA]`, menunggu konfirmasi konten resmi.
 - Tentang Kami memakai `public/assets/temporary/about-hero-aerial.png`, aset generatif sementara atas instruksi stakeholder.
 - Blok cerita Tentang Kami memakai `about-foundation.png`, `about-hero-aerial.png`, dan `about-opening.png` sebagai aset generatif sementara atas instruksi stakeholder. Narasi dari screenshot tetap `[FIGMA SEMENTARA]` sambil menunggu konten resmi.
 - Kartu fallback Wahana memakai lima aset generatif sementara: `ride-waterpark.png`, `ride-flying-fox.png`, `ride-go-kart.png`, `ride-perahu-bebek.png`, dan `ride-carousel.png`, atas instruksi stakeholder.
+- 2026-08-12: Beranda mendapat visual refresh berdasarkan instruksi stakeholder terbaru dengan nuansa lebih fun, dominan biru dan aksen oranye. Refresh dibuat hanya melalui CSS (gradient, border, radius, shadow, hover) tanpa aset/elemen dekor tambahan; struktur, isi, dan behavior bisnis tidak diubah. Status desktop: QA browser lokal 1440px, bukan Figma verified. Mobile: responsive fallback diperiksa pada 375px.

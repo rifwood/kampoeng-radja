@@ -41,13 +41,14 @@ Pengembangan dilakukan secara bertahap agar setiap sistem dapat dirancang, diuji
 
 ## 3. Produk yang Direncanakan
 
-Ekosistem digital Kampoeng Radja terdiri dari tiga produk utama.
+Ekosistem digital Kampoeng Radja terdiri dari website publik dan sistem internal yang dikembangkan bertahap.
 
 | # | Produk | Folder Dokumentasi | Status |
 |---|---|---|---|
-| 1 | **Landing Page / Company Profile** | `docs/LANDING-PAGE/` | 🟢 **Fase 1 — sedang dikembangkan** |
-| 2 | **Sistem KPI Karyawan** | `docs/02-KPI-SYSTEM/` | ⏳ Fase 2 — menunggu pemetaan kebutuhan dan master data |
-| 3 | **Sistem Closing Event Marketing** | `docs/03-CLOSING-EVENT-MARKETING/` | ⏳ Fase 3 — menunggu pemetaan kebutuhan dan master data |
+| 1 | **Landing Page / Company Profile** | `docs/LANDING-PAGE/` | **Aktif — implementasi parsial** |
+| 2 | **Dashboard Internal Foundation** | `docs/DASHBOARD/` | **Aktif terbatas — Absensi dan fondasi master data** |
+| 3 | **Sistem KPI Karyawan** | Belum dibuat | **Planned / belum aktif** |
+| 4 | **Sistem Closing Event Marketing** | Belum dibuat | **Planned / belum aktif** |
 
 Setiap produk akan memiliki dokumentasi sendiri yang menjelaskan requirement, alur pengguna, UI, data, komponen, dan aturan implementasinya.
 
@@ -57,9 +58,11 @@ Dokumentasi produk hanya dibuat atau dikembangkan ketika fase tersebut sudah mul
 
 ## 4. Fokus Pengembangan Saat Ini
 
-Fokus proyek saat ini adalah:
+Fokus proyek saat ini terbagi menjadi:
 
-> **Fase 1 — Landing Page / Company Profile Kampoeng Radja**
+> **Landing Page / Company Profile yang belum release-ready**
+
+> **Dashboard Internal Foundation untuk modul yang sudah memiliki requirement aktif**
 
 Landing page berfungsi sebagai website publik resmi Kampoeng Radja.
 
@@ -73,7 +76,9 @@ Pada fase ini pekerjaan difokuskan pada:
 - pengelolaan aset visual;
 - struktur frontend yang dapat dikembangkan kembali pada fase selanjutnya.
 
-Fitur internal KPI dan Closing Event Marketing **bukan bagian dari scope implementasi Fase 1**, kecuali bagian fondasi aplikasi yang memang sudah tersedia.
+Data Absensi Super Admin sudah menjadi workstream aktif berdasarkan requirement stakeholder. Kelola Karyawan menjadi dependency berikutnya, tetapi detail requirement dan permission masih harus disediakan.
+
+Fitur internal KPI dan Closing Event Marketing tetap **belum aktif** dan tidak boleh dibangun hanya karena menu `(Soon)` atau rencana global tersedia.
 
 ---
 

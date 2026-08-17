@@ -177,7 +177,7 @@ Contoh konseptual:
 
 Path final tidak boleh diasumsikan dari contoh di atas.
 
-Detail routing internal ditentukan pada PRD fase terkait.
+Detail routing internal ditentukan pada PRD modul terkait. Kondisi implementation aktual dicatat di `LOG.md`; konsep akses dan matrix berada di `GLOBAL/ACCESS_CONTROL.md` dan `GLOBAL/ACCESS_CONTROL_MATRIX.md`.
 
 ---
 
@@ -229,9 +229,9 @@ Namun struktur database final harus mengikuti hasil analisis kebutuhan dan migra
 
 ---
 
-## 7.1 Batas Fase 1
+## 7.1 Batas Workstream Aktif
 
-Pada Fase 1, agent **tidak boleh membangun struktur data Fase 2/3 sebelum requirement tersedia**, seperti:
+Agent **tidak boleh membangun struktur data KPI/Closing atau modul internal lain sebelum requirement tersedia**, seperti:
 
 ```text
 employees
@@ -244,7 +244,13 @@ marketing_targets
 
 atau tabel internal lain yang belum disetujui.
 
-Tujuan Fase 1 hanya menyediakan fondasi yang memang dibutuhkan sekarang.
+Landing Page tetap mengikuti PRD Fase 1. Dashboard hanya boleh berkembang untuk modul yang diaktifkan dan didokumentasikan pada `docs/DASHBOARD/`.
+
+## 7.2 Schema Aktual vs Model Konseptual
+
+Contoh entity pada dokumen arsitektur ini bersifat konseptual dan tidak membatalkan migration final. Daftar tabel, constraint, dan status implementasi aktual harus dibaca dari migration dan diringkas di `LOG.md`.
+
+Per 15 Agustus 2026, source juga memiliki master karyawan, role, akun username/PIN, CMS final, serta Absensi. Keberadaan source tersebut tidak otomatis menetapkan permission atau requirement bisnis modul berikutnya.
 
 ---
 

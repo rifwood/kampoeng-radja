@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Category;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,14 +14,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $wahana = Category::firstOrCreate(['slug' => 'wahana'], ['name' => 'Wahana']);
-        Category::firstOrCreate(['slug' => 'tempat-makan'], ['name' => 'Tempat Makan']);
+        if (! app()->environment('local', 'testing')) {
+            $this->command?->warn('DevelopmentSeeder dilewati di luar environment local/testing.');
 
-        foreach (['Anak-anak', 'Dewasa', 'Air', 'Darat', 'Adrenaline', 'Santai'] as $label) {
-            $wahana->labels()->firstOrCreate(
-                ['slug' => str($label)->slug()->toString()],
-                ['name' => $label],
-            );
+            return;
         }
+
+        $this->call(DevelopmentSeeder::class);
     }
 }

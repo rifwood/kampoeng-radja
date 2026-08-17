@@ -33,11 +33,16 @@ Jika suatu keputusan tidak memiliki dasar yang jelas, agent harus menganggapnya 
 
 Sebelum mengerjakan produk apa pun, agent wajib membaca:
 
-1. `docs/GLOBAL/PROJECT_CONTEXT.md`
-2. `docs/GLOBAL/TECH_STACK.md`
-3. `docs/GLOBAL/BRAND_GUIDELINE.md`
-4. `docs/GLOBAL/ARCHITECTURE.md`
-5. `docs/GLOBAL/AGENT_RULES.md`
+1. `AGENTS.md`
+2. `LOG.md`
+3. `docs/README.md`
+4. `docs/GLOBAL/PROJECT_CONTEXT.md`
+5. `docs/GLOBAL/TECH_STACK.md`
+6. `docs/GLOBAL/BRAND_GUIDELINE.md`
+7. `docs/GLOBAL/ARCHITECTURE.md`
+8. `docs/GLOBAL/ACCESS_CONTROL.md` jika access/auth relevan
+9. `docs/GLOBAL/ACCESS_CONTROL_MATRIX.md` jika access/auth relevan
+10. `docs/GLOBAL/AGENT_RULES.md`
 
 Dokumen global memberikan konteks proyek, stack, brand, arsitektur, dan aturan kerja.
 
@@ -62,6 +67,8 @@ Untuk **Fase 1 — Landing Page**, urutan baca wajib adalah:
 11. `docs/LANDING-PAGE/TODO.md`
 
 Agent tidak boleh melewati `FIGMA.md` ketika pekerjaan menyangkut frontend atau visual.
+
+Untuk Dashboard Internal, baca `docs/DASHBOARD/README.md`, lalu PRD, permissions, UI spec, dan screenshot/reference modul yang tersedia. Dashboard tidak otomatis menggunakan Figma-first jika handoff visualnya berupa screenshot.
 
 ---
 
@@ -339,20 +346,22 @@ Jika aset tersedia di Figma, gunakan aset Figma.
 
 # 11. Scope Fase
 
-Agent hanya boleh mengerjakan fase yang sedang aktif.
+Agent hanya boleh mengerjakan workstream yang sedang aktif dan memiliki requirement cukup.
 
 Saat ini:
 
-> **Fase 1 aktif: Landing Page / Company Profile**
+- Landing Page / Company Profile aktif tetapi belum selesai;
+- Dashboard Internal aktif terbatas untuk Data Absensi dan persiapan Kelola Karyawan;
+- KPI dan Closing Event belum aktif.
 
-Jangan mengembangkan fitur Fase 2 atau Fase 3 kecuali secara eksplisit diminta.
+Jangan memperluas Dashboard ke KPI, Closing Event, atau permission granular yang belum diputuskan.
 
 Fase berikutnya:
 
 - Sistem KPI Karyawan;
 - Sistem Closing Event Marketing.
 
-Fondasi yang sudah tersedia di proyek boleh dipertahankan selama tidak mengganggu scope aktif.
+Fondasi yang sudah tersedia di proyek boleh dipertahankan. Keberadaan source tidak otomatis menjadikannya requirement bisnis final; mismatch harus didokumentasikan.
 
 ---
 
