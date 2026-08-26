@@ -10,18 +10,25 @@ use Throwable;
 
 class UpdateEmployee
 {
+    public function __construct(private readonly SyncEmployeeAccountRole $syncAccountRole) {}
+
     public function handle(Karyawan $employee, array $data, ?UploadedFile $photo): Karyawan
     {
         $oldPath = $employee->foto_ktp;
         $newPath = $photo?->store('employee-ktp', 'local');
+        $positionChanged = array_key_exists('jabatan_id', $data)
+            && (int) $employee->jabatan_id !== (int) $data['jabatan_id'];
 
         try {
-            DB::transaction(function () use ($employee, $data, $newPath): void {
+            DB::transaction(function () use ($employee, $data, $newPath, $positionChanged): void {
                 unset($data['foto_ktp']);
                 if ($newPath) {
                     $data['foto_ktp'] = $newPath;
                 }
                 $employee->update($data);
+                if ($positionChanged) {
+                    $this->syncAccountRole->handle($employee->refresh());
+                }
 
                 if ($employee->status_keaktifan === 'nonaktif') {
                     $employee->user()->update(['is_active' => false]);

@@ -1,74 +1,128 @@
-# UI Spec — Data Absensi
+# UI_SPEC — Absensi
 
-Status: **behavior aktif; visual mengikuti screenshot approved jika tersedia di repository**
+**Status:** FINAL
+**Last Updated:** 2026-08-20
 
-## Page Structure
+## 1. Navigation
 
-- Sidebar Dashboard penuh tinggi viewport.
-- Top navbar memuat search, notifikasi, settings, dan identitas user sesuai reference.
-- Judul content: `Data Absensi`.
-- Card informasi menampilkan tanggal dinamis, status input, badge view, dan action sesuai state.
-- Legenda H/I/A berada di atas tabel.
-- Tabel menampilkan nomor, nama karyawan, jabatan, kehadiran, dan keterangan.
+Super Admin menggunakan label `Kelola Absensi`. Admin/User menggunakan label
+`Data Absensi` dan menu tetap terlihat.
 
-## State UI
+## 2. Super Admin — Kelola Absensi
 
-### Create State
+Kolom/input:
 
-- Semua radio H/I/A dan input keterangan enabled.
-- Tombol `Simpan Absensi` enabled setelah data valid.
+```text
+Nama
+Jabatan
+Kehadiran
+Jam Masuk
+Jam Keluar
+Keterangan
+```
 
-### Saved State
+Kehadiran memakai H/I/A sesuai design system existing. Jam Masuk dan Jam
+Keluar memakai input teks waktu `HH:MM` yang keyboard-first. Input angka empat
+digit seperti `0930` otomatis menjadi `09:30`; nilai harus berada pada rentang
+`00:00`–`23:59`. Jam masuk maksimal `12:00`. Control kecil di sisi input dapat
+menambah/mengurangi satu menit tanpa membuka native time picker. Enter berpindah
+dari Jam Masuk ke Jam Keluar lalu ke Jam Masuk karyawan Hadir berikutnya.
+Arrow Up/Down berpindah antar-karyawan pada kolom waktu yang sama dan melewati
+row I/A; perubahan menit hanya melalui tombol mouse. Jam Keluar boleh kosong.
+Jika I/A dipilih, kedua input jam dinonaktifkan dan dikosongkan, sementara
+backend tetap membersihkan nilainya. Keterangan opsional.
 
-- Radio dan input read-only/disabled.
-- Tampilkan `Edit Absensi` hanya jika tanggal adalah hari berjalan.
+Jam masuk H setelah `08:30` menampilkan indikator kecil `Terlambat`. Jam keluar
+H sebelum `16:30` menampilkan indikator kecil `Pulang Awal`. Tidak ada indikator
+jika nilai jam terkait masih kosong.
 
-### Edit State
+Tombol `Simpan Absensi` harus bisa diklik ketika payload valid dan tidak boleh
+stuck disabled karena state frontend.
 
-- Radio dan input kembali aktif.
-- Tampilkan `Batal` dan `Simpan Perubahan`.
-- `Batal` mengembalikan nilai terakhir dari server.
+Super Admin dapat memilih tanggal melalui date picker serta shortcut `Kemarin`
+dan `Hari Ini`. Controls mutation tampil untuk kedua tanggal tersebut. Tanggal
+sebelum kemarin tetap dapat dilihat, tetapi controls menjadi read-only. Tanggal
+masa depan tidak dapat dipilih untuk mutation.
 
-### Past State
+## 3. Admin/User — Data Absensi
 
-- Seluruh data read-only.
-- Tidak ada action mutation.
+Read-only table berisi Tanggal, Nama, Jabatan, Kehadiran, Jam Masuk, Jam Keluar,
+dan Keterangan. Tidak ada input editable, Simpan, Edit, Hapus, atau Export
+Excel.
 
-### Loading / Error
+## 4. Window Input/Edit
 
-- Disable submit selama request.
-- Pertahankan input ketika validation gagal.
-- Tampilkan feedback sukses/error melalui mekanisme Inertia existing.
+Super Admin dapat input/edit hari berjalan dan satu hari kalender sebelumnya.
+Window memakai tanggal kalender zona `Asia/Jakarta`, sehingga tetap aman pada
+pergantian bulan, tahun, dan leap year. Tanggal sebelum kemarin read-only untuk
+semua role dan mutation ditolak backend. Admin/User tetap read-only pada hari
+ini maupun kemarin.
 
-## Kehadiran
+## 5. Laporan Absensi — Super Admin
 
-- Pilihan H/I/A merupakan satu radio group per karyawan.
-- H aktif: biru, teks putih.
-- I aktif: kuning, teks gelap.
-- A aktif: merah/pink yang konsisten.
-- Pilihan tidak aktif: putih, border abu-abu, teks gelap.
-- Informasi status tidak boleh hanya mengandalkan warna; label huruf tetap terlihat.
+Area export:
 
-## Karyawan dan Avatar
+```text
+Laporan Absensi
 
-- Nama dan jabatan berasal dari master data.
-- Gunakan foto profil hanya jika field/sumber yang disetujui tersedia.
-- Jangan menggunakan foto KTP sebagai avatar secara otomatis.
-- Fallback saat ini boleh berupa inisial.
+[Bulan ▼] [Tahun ▼] [Export Excel]
+```
 
-## Search
+Bulan/tahun berdasarkan `tanggal_absensi`. Admin/User tidak menerima tombol
+Export Excel dan akses endpoint secara langsung tetap ditolak HTTP 403.
 
-- Search memfilter daftar yang sedang tampil secara client-side selama dataset masih dimuat penuh.
-- Search tidak mengubah permission atau data scope.
+## 6. Excel Multi-Sheet
 
-## Responsive
+Satu bulan menghasilkan satu workbook `.xlsx`. Sheet pertama adalah `Rekap
+Bulanan`; sheet berikutnya mencakup setiap tanggal kalender dalam bulan. Tanggal
+tanpa data tetap memiliki sheet dengan header dan empty state.
 
-- Sidebar dapat berubah menjadi drawer.
-- Tabel boleh horizontal scroll.
-- Action tidak boleh keluar viewport.
-- Semua input tetap dapat digunakan pada touch viewport.
-- Jangan klaim pixel-accurate pada viewport tanpa reference.
+Kolom Rekap Bulanan: NO, NAMA KARYAWAN, JABATAN, TOTAL HADIR, TOTAL IZIN,
+TOTAL ALFA, TOTAL TERLAMBAT, dan TOTAL PULANG AWAL.
 
-## Visual Verification
+Nama sheet memakai tanggal Indonesia ringkas, misalnya `17 Agt 2026`. Sheet
+diurutkan tanggal ascending setelah Rekap Bulanan. Row pada setiap sheet harian
+diurutkan nama karyawan ascending dan nomor dimulai lagi dari 1. Jumlah daily
+sheet mengikuti jumlah hari kalender aktual, termasuk leap year.
 
-Screenshot yang pernah diberikan melalui percakapan belum disimpan sebagai file repository. Sampai reference dipersist dan dibandingkan, status visual adalah `NEEDS VERIFICATION`.
+Kolom final:
+
+```text
+NO
+TANGGAL
+NAMA
+JABATAN
+KEHADIRAN
+JAM MASUK
+JAM KELUAR
+KETERANGAN
+```
+
+Jam NULL tampil `-`. Header bold dengan warna ringan dan border tipis; lebar
+kolom Nama, Jabatan, dan Keterangan dibuat cukup luas. Jika seluruh periode
+kosong, workbook tetap berisi header Rekap Bulanan dan daily sheet dengan empty
+state untuk setiap tanggal kalender.
+
+## 7. Responsive
+
+Desktop: table compact dan input jam tidak terlalu lebar.
+
+Tablet/Mobile: horizontal scroll diperbolehkan dan controls tetap usable.
+
+## 8. States
+
+- loading;
+- processing;
+- validation error;
+- success flash;
+- Excel export error;
+- read-only Admin/User;
+- editable today/yesterday untuk Super Admin;
+- read-only sebelum kemarin;
+- empty monthly period.
+
+## 9. QA Matrix
+
+Super Admin: edit controls untuk hari ini/kemarin, jam inputs, dan Export Excel terlihat.
+
+Admin/User: data read-only terlihat; edit controls dan Export Excel tidak ada.

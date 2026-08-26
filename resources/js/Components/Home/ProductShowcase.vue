@@ -1,0 +1,277 @@
+<script setup>
+import { computed, nextTick, ref } from 'vue';
+
+const products = [
+  {
+    id: 'outing-class',
+    name: 'Outing Class',
+    thumbnail: '/assets/products/temp/outing-class-temp.png',
+    heroImage: '/assets/products/temp/outing-class-hero-temp.png',
+    heroMode: 'cover',
+  },
+  {
+    id: 'paket-arisan',
+    name: 'Paket Arisan',
+    thumbnail: '/assets/products/temp/paket-arisan-temp.png',
+    heroImage: '/assets/products/temp/paket-arisan-temp.png',
+    heroMode: 'contain',
+  },
+  {
+    id: 'paket-birthday',
+    name: 'Paket Birthday',
+    thumbnail: '/assets/products/temp/paket-birthday-temp.png',
+    heroImage: '/assets/products/temp/paket-birthday-temp.png',
+    heroMode: 'contain',
+  },
+  {
+    id: 'wisata-edukasi',
+    name: 'Wisata Edukasi',
+    thumbnail: '/assets/products/temp/wisata-edukasi-temp.png',
+    heroImage: '/assets/products/temp/wisata-edukasi-temp.png',
+    heroMode: 'contain',
+  },
+  {
+    id: 'tenda-panggung',
+    name: 'Tenda Panggung',
+    thumbnail: '/assets/products/temp/tenda-panggung-temp.png',
+    heroImage: '/assets/products/temp/tenda-panggung-temp.png',
+    heroMode: 'contain',
+  },
+  {
+    id: 'istana-balon',
+    name: 'Istana Balon',
+    thumbnail: '/assets/products/temp/istana-balon-temp.png',
+    heroImage: '/assets/products/temp/istana-balon-temp.png',
+    heroMode: 'contain',
+  },
+  {
+    id: 'lantai-multimedia',
+    name: 'Lantai Multimedia',
+    thumbnail: '/assets/products/temp/lantai-multimedia-temp.png',
+    heroImage: '/assets/products/temp/lantai-multimedia-temp.png',
+    heroMode: 'contain',
+  },
+  {
+    id: 'paket-fasilitator',
+    name: 'Paket Fasilitator',
+    thumbnail: '/assets/products/temp/paket-fasilitator-temp.png',
+    heroImage: '/assets/products/temp/paket-fasilitator-temp.png',
+    heroMode: 'contain',
+  },
+];
+
+const activeIndex = ref(0);
+const transitionDirection = ref(1);
+const thumbnailTrack = ref(null);
+const activeProduct = computed(() => products[activeIndex.value]);
+const activeHeroImage = computed(() => activeProduct.value.heroImage || activeProduct.value.thumbnail);
+const transitionName = computed(() => transitionDirection.value > 0 ? 'product-next' : 'product-previous');
+
+const revealThumbnail = async (index) => {
+  await nextTick();
+  const target = thumbnailTrack.value?.querySelector(`[data-product-index="${index}"]`);
+  target?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+};
+
+const selectProduct = (index, direction = null) => {
+  if (index === activeIndex.value) return;
+
+  transitionDirection.value = direction ?? (index > activeIndex.value ? 1 : -1);
+  activeIndex.value = index;
+  revealThumbnail(index);
+};
+
+const moveProduct = (direction) => {
+  const nextIndex = (activeIndex.value + direction + products.length) % products.length;
+  selectProduct(nextIndex, direction);
+};
+
+const moveThumbnails = (direction) => {
+  const track = thumbnailTrack.value;
+  if (!track) return;
+
+  track.scrollBy({
+    left: direction * Math.max(track.clientWidth * 0.72, 240),
+    behavior: 'smooth',
+  });
+};
+</script>
+
+<template>
+  <div
+    class="product-showcase overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_78%,#eef5ff_100%)] px-5 pb-9 pt-16 sm:pb-10 sm:pt-20 lg:px-0 lg:pb-10 lg:pt-24"
+    role="region"
+    aria-labelledby="product-showcase-title"
+  >
+    <div class="mx-auto max-w-[1120px]">
+      <header class="mx-auto max-w-[720px] text-center">
+        <span class="inline-flex items-center gap-2 rounded-full border border-[#cddcf0] bg-white px-4 py-2 text-[11px] font-bold tracking-[0.08em] text-[#0751ad] shadow-[0_5px_18px_rgba(16,76,143,.07)]">
+          <img src="/assets/brand/kampoeng-radja-navbar.png" alt="" class="h-4 w-7 object-contain" aria-hidden="true" />
+          KAMPOENG RADJA
+        </span>
+        <h2 id="product-showcase-title" class="mt-4 font-heading text-[38px] font-extrabold leading-none text-[#062a59] sm:text-[48px] lg:text-[56px]">Produk</h2>
+        <p class="mx-auto mt-4 max-w-[620px] text-sm leading-6 text-[#596273] sm:text-base">
+          Beragam paket, fasilitas, dan aktivitas terbaik dari Kampoeng Radja<br class="hidden sm:block" />
+          untuk pengalaman belajar, bermain, dan berkesan.
+        </p>
+      </header>
+
+      <div class="relative mt-10 sm:px-14 lg:mt-12 lg:px-16">
+        <button
+          type="button"
+          class="product-nav absolute left-0 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[#d8e2ef] bg-white text-xl font-bold text-[#075ac2] shadow-[0_8px_24px_rgba(17,61,113,.14)] transition hover:-translate-y-[54%] hover:border-[#075ac2] hover:bg-[#075ac2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60 sm:grid"
+          aria-label="Produk sebelumnya"
+          @click="moveProduct(-1)"
+        >
+          ←
+        </button>
+
+        <div class="relative aspect-[4/3] overflow-hidden rounded-[22px] border-[6px] border-white bg-[radial-gradient(circle_at_center,#f7fbff_0%,#e4f2ff_100%)] shadow-[0_18px_44px_rgba(13,64,125,.16)] sm:aspect-[16/8] lg:aspect-[16/7]">
+          <Transition :name="transitionName" mode="out-in">
+            <div
+              :key="activeProduct.id"
+              class="absolute inset-0 h-full w-full overflow-hidden"
+            >
+              <template v-if="activeProduct.heroMode === 'contain'">
+                <img
+                  :src="activeHeroImage"
+                  alt=""
+                  aria-hidden="true"
+                  class="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-2xl"
+                />
+                <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(238,247,255,.58),rgba(255,255,255,.3),rgba(238,247,255,.58))]"></div>
+              </template>
+
+              <img
+                :src="activeHeroImage"
+                :alt="`Produk ${activeProduct.name}`"
+                :class="activeProduct.heroMode === 'cover' ? 'object-cover' : 'object-contain px-4 py-3 sm:px-8 sm:py-5'"
+                class="relative z-10 h-full w-full"
+              />
+            </div>
+          </Transition>
+          <span class="sr-only" aria-live="polite">Produk aktif: {{ activeProduct.name }}</span>
+        </div>
+
+        <button
+          type="button"
+          class="product-nav absolute right-0 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[#d8e2ef] bg-white text-xl font-bold text-[#075ac2] shadow-[0_8px_24px_rgba(17,61,113,.14)] transition hover:-translate-y-[54%] hover:border-[#075ac2] hover:bg-[#075ac2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60 sm:grid"
+          aria-label="Produk berikutnya"
+          @click="moveProduct(1)"
+        >
+          →
+        </button>
+
+        <div class="mt-4 flex items-center justify-between sm:hidden">
+          <button type="button" class="product-nav grid h-10 w-10 place-items-center rounded-full border border-[#d8e2ef] bg-white font-bold text-[#075ac2] shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60" aria-label="Produk sebelumnya" @click="moveProduct(-1)">←</button>
+          <span class="text-xs font-semibold text-[#52647a]">{{ activeIndex + 1 }} / {{ products.length }}</span>
+          <button type="button" class="product-nav grid h-10 w-10 place-items-center rounded-full border border-[#d8e2ef] bg-white font-bold text-[#075ac2] shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60" aria-label="Produk berikutnya" @click="moveProduct(1)">→</button>
+        </div>
+      </div>
+
+      <div class="relative mt-7 px-10 sm:px-12">
+        <button
+          type="button"
+          class="absolute left-0 top-[72px] z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-[#d8e2ef] bg-white font-bold text-[#075ac2] shadow-md transition hover:border-[#075ac2] hover:bg-[#075ac2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60"
+          aria-label="Geser thumbnail produk ke kiri"
+          @click="moveThumbnails(-1)"
+        >
+          ←
+        </button>
+
+        <div ref="thumbnailTrack" class="product-thumbnails flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:gap-4">
+          <button
+            v-for="(product, index) in products"
+            :key="product.id"
+            type="button"
+            :data-product-index="index"
+            class="group w-[112px] shrink-0 snap-start rounded-[16px] border-2 bg-white p-1.5 text-center transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60 sm:w-[124px] lg:w-[128px]"
+            :class="index === activeIndex ? 'border-[#0868d5] shadow-[0_8px_22px_rgba(8,104,213,.16)]' : 'border-transparent shadow-[0_4px_14px_rgba(26,57,92,.08)] hover:border-[#b8d6f5]'"
+            :aria-pressed="index === activeIndex"
+            :aria-label="`Tampilkan produk ${product.name}`"
+            @click="selectProduct(index)"
+          >
+            <img :src="product.thumbnail" alt="" class="aspect-[4/5] w-full rounded-[11px] object-cover" loading="lazy" />
+            <span class="mt-2 block truncate px-1 text-[11px] font-semibold leading-4 text-[#46556a] group-hover:text-[#075ac2]">{{ product.name }}</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="absolute right-0 top-[72px] z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-[#d8e2ef] bg-white font-bold text-[#075ac2] shadow-md transition hover:border-[#075ac2] hover:bg-[#075ac2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60"
+          aria-label="Geser thumbnail produk ke kanan"
+          @click="moveThumbnails(1)"
+        >
+          →
+        </button>
+      </div>
+
+      <!-- TODO: arahkan ke halaman Produk setelah requirement route dan CMS disetujui. -->
+      <div class="mt-8 text-center">
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          title="Halaman Produk lengkap belum tersedia"
+          class="inline-flex h-11 cursor-not-allowed items-center justify-center gap-3 rounded-full border-2 border-[#075ac2] bg-white px-7 text-sm font-bold text-[#075ac2] opacity-75"
+        >
+          <span class="grid grid-cols-2 gap-[3px]" aria-hidden="true">
+            <span v-for="item in 4" :key="item" class="h-1.5 w-1.5 rounded-[1px] border border-current"></span>
+          </span>
+          Lihat Semua Produk
+        </button>
+      </div>
+
+      <img
+        src="/assets/decorations/product-section-crown-divider.png"
+        alt=""
+        aria-hidden="true"
+        class="mx-auto mt-6 h-auto w-[220px] max-w-full object-contain sm:w-[300px] lg:w-[400px]"
+        loading="lazy"
+      />
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.product-thumbnails {
+  scrollbar-width: none;
+}
+
+.product-thumbnails::-webkit-scrollbar {
+  display: none;
+}
+
+.product-next-enter-active,
+.product-next-leave-active,
+.product-previous-enter-active,
+.product-previous-leave-active {
+  transition: opacity 320ms ease, transform 320ms ease;
+  will-change: opacity, transform;
+}
+
+.product-next-enter-from,
+.product-previous-leave-to {
+  opacity: 0;
+  transform: translate3d(18px, 0, 0);
+}
+
+.product-next-leave-to,
+.product-previous-enter-from {
+  opacity: 0;
+  transform: translate3d(-18px, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-next-enter-active,
+  .product-next-leave-active,
+  .product-previous-enter-active,
+  .product-previous-leave-active {
+    transition-duration: 1ms;
+  }
+
+  .product-thumbnails {
+    scroll-behavior: auto;
+  }
+}
+</style>

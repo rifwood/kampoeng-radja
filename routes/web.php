@@ -2,7 +2,12 @@
 
 use App\Http\Controllers\Admin\AbsensiController;
 use App\Http\Controllers\Admin\EventPromoController;
+use App\Http\Controllers\Admin\GaleriEventController;
+use App\Http\Controllers\Admin\HomeHeroController;
 use App\Http\Controllers\Admin\MediaBeritaController;
+use App\Http\Controllers\Admin\WahanaController;
+use App\Http\Controllers\ClosingEvent\ClosingEventController;
+use App\Http\Controllers\ClosingEvent\ClosingEventMasterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Employee\DepartemenController;
 use App\Http\Controllers\Employee\EmployeeAccountController;
@@ -35,6 +40,9 @@ Route::prefix('dashboard')
     ->middleware(['auth', 'active'])
     ->group(function (): void {
         Route::get('karyawan', [EmployeeController::class, 'index'])->name('karyawan.index');
+        Route::get('karyawan/export', [EmployeeController::class, 'export'])
+            ->middleware('super_admin')
+            ->name('karyawan.export');
         Route::get('karyawan/create', [EmployeeController::class, 'create'])
             ->middleware('super_admin')
             ->name('karyawan.create');
@@ -42,6 +50,48 @@ Route::prefix('dashboard')
             ->middleware('super_admin')
             ->name('karyawan.edit');
         Route::get('karyawan/{karyawan}', [EmployeeController::class, 'show'])->name('karyawan.show');
+
+        Route::get('closing-event/export', [ClosingEventController::class, 'export'])
+            ->name('closing-event.export');
+        Route::prefix('closing-event/master')
+            ->name('closing-event.master.')
+            ->group(function (): void {
+                Route::get('/', [ClosingEventMasterController::class, 'index'])->name('index');
+                Route::post('pic', [ClosingEventMasterController::class, 'storePic'])->name('pic.store');
+                Route::put('pic/{pic}', [ClosingEventMasterController::class, 'updatePic'])->name('pic.update');
+                Route::delete('pic/{pic}', [ClosingEventMasterController::class, 'destroyPic'])->name('pic.destroy');
+                Route::post('jenis-event', [ClosingEventMasterController::class, 'storeJenisEvent'])->name('jenis-event.store');
+                Route::put('jenis-event/{jenisEvent}', [ClosingEventMasterController::class, 'updateJenisEvent'])->name('jenis-event.update');
+                Route::delete('jenis-event/{jenisEvent}', [ClosingEventMasterController::class, 'destroyJenisEvent'])->name('jenis-event.destroy');
+                Route::post('lokasi', [ClosingEventMasterController::class, 'storeLokasi'])->name('lokasi.store');
+                Route::put('lokasi/{lokasi}', [ClosingEventMasterController::class, 'updateLokasi'])->name('lokasi.update');
+                Route::delete('lokasi/{lokasi}', [ClosingEventMasterController::class, 'destroyLokasi'])->name('lokasi.destroy');
+            });
+        Route::resource('closing-event', ClosingEventController::class)
+            ->parameters(['closing-event' => 'closingEvent']);
+
+        Route::prefix('cms')
+            ->name('cms.')
+            ->middleware('admin')
+            ->group(function (): void {
+                Route::get('beranda', [EventPromoController::class, 'home'])->name('home');
+                Route::patch('beranda/hero', [HomeHeroController::class, 'update'])->name('home.hero.update');
+                Route::post('beranda/promo', [EventPromoController::class, 'store'])->name('home.promo.store');
+                Route::patch('beranda/promo/{eventPromo}', [EventPromoController::class, 'update'])->name('home.promo.update');
+                Route::patch('beranda/promo/{eventPromo}/status', [EventPromoController::class, 'toggleStatus'])->name('home.promo.status');
+                Route::delete('beranda/promo/{eventPromo}', [EventPromoController::class, 'destroy'])->name('home.promo.destroy');
+
+                Route::get('wahana', [WahanaController::class, 'index'])->name('wahana.index');
+                Route::post('wahana', [WahanaController::class, 'store'])->name('wahana.store');
+                Route::patch('wahana/{wahana}', [WahanaController::class, 'update'])->name('wahana.update');
+                Route::patch('wahana/{wahana}/status', [WahanaController::class, 'toggleStatus'])->name('wahana.status');
+                Route::delete('wahana/{wahana}', [WahanaController::class, 'destroy'])->name('wahana.destroy');
+
+                Route::get('galeri-event', [GaleriEventController::class, 'index'])->name('gallery.index');
+                Route::post('galeri-event', [GaleriEventController::class, 'store'])->name('gallery.store');
+                Route::patch('galeri-event/{galeriEvent}', [GaleriEventController::class, 'update'])->name('gallery.update');
+                Route::delete('galeri-event/{galeriEvent}', [GaleriEventController::class, 'destroy'])->name('gallery.destroy');
+            });
 
         Route::middleware('super_admin')->group(function (): void {
             Route::post('karyawan', [EmployeeController::class, 'store'])->name('karyawan.store');
@@ -65,6 +115,15 @@ Route::prefix('dashboard')
 
 Route::prefix('admin')
     ->name('admin.')
+    ->middleware(['auth', 'active'])
+    ->group(function (): void {
+        Route::get('absensi/export', [AbsensiController::class, 'export'])->name('absensi.export');
+        Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
+        Route::put('absensi', [AbsensiController::class, 'store'])->name('absensi.store');
+    });
+
+Route::prefix('admin')
+    ->name('admin.')
     ->middleware(['auth', 'admin'])
     ->group(function (): void {
         Route::resource('media-berita', MediaBeritaController::class)
@@ -73,10 +132,6 @@ Route::prefix('admin')
         Route::resource('event-promo', EventPromoController::class)
             ->parameters(['event-promo' => 'eventPromo'])
             ->except('show');
-        Route::middleware('super_admin')->group(function (): void {
-            Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
-            Route::put('absensi', [AbsensiController::class, 'store'])->name('absensi.store');
-        });
     });
 
 require __DIR__.'/auth.php';

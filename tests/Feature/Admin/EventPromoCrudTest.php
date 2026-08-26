@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\EventPromo;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\WhatsAppNumber;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -57,8 +58,7 @@ class EventPromoCrudTest extends TestCase
         $admin = $this->userWithRole('admin');
 
         $this->actingAs($admin)->post('/admin/event-promo', [
-            'judul' => 'Promo Pengujian',
-            'deskripsi_singkat' => 'Deskripsi singkat promo pengujian.',
+            ...$this->validPromoData(),
             'poster' => $this->fakeImage('poster.png'),
             'link_wa' => null,
             'created_by' => 999999,
@@ -81,10 +81,15 @@ class EventPromoCrudTest extends TestCase
             ->post('/admin/event-promo', [
                 'judul' => str_repeat('a', 151),
                 'deskripsi_singkat' => str_repeat('b', 256),
+                'deskripsi_lengkap' => '',
                 'poster' => UploadedFile::fake()->create('document.pdf', 20, 'application/pdf'),
+                'tanggal_mulai' => '2026-08-20',
+                'tanggal_selesai' => '2026-08-19',
                 'link_wa' => str_repeat('c', 256),
+                'is_active' => 'invalid',
+                'urutan_tampil' => -1,
             ])
-            ->assertSessionHasErrors(['judul', 'deskripsi_singkat', 'poster', 'link_wa']);
+            ->assertSessionHasErrors(['judul', 'deskripsi_singkat', 'deskripsi_lengkap', 'poster', 'tanggal_selesai', 'link_wa', 'is_active', 'urutan_tampil']);
 
         $this->assertDatabaseCount('event_promo', 0);
     }
@@ -98,15 +103,18 @@ class EventPromoCrudTest extends TestCase
         Storage::disk('public')->put($item->poster, 'original');
 
         $this->actingAs($admin)->patch(route('admin.event-promo.update', $item), [
-            'judul' => 'Judul Diperbarui',
-            'deskripsi_singkat' => 'Deskripsi singkat diperbarui.',
-            'link_wa' => 'https://wa.me/628123456789',
+            ...$this->validPromoData([
+                'judul' => 'Judul Diperbarui',
+                'deskripsi_singkat' => 'Deskripsi singkat diperbarui.',
+                'link_wa' => 'https://wa.me/628123456789',
+            ]),
         ])->assertRedirect(route('admin.event-promo.index'));
 
         $item->refresh();
         $this->assertSame('Judul Diperbarui', $item->judul);
         $this->assertSame($creator->id, $item->created_by);
         $this->assertSame($admin->id, $item->updated_by);
+        $this->assertSame('628123456789', $item->link_wa);
         $this->assertSame('event-promo/original.jpg', $item->poster);
         Storage::disk('public')->assertExists($item->poster);
     }
@@ -120,8 +128,10 @@ class EventPromoCrudTest extends TestCase
 
         $this->actingAs($admin)->post(route('admin.event-promo.update', $item), [
             '_method' => 'patch',
-            'judul' => $item->judul,
-            'deskripsi_singkat' => $item->deskripsi_singkat,
+            ...$this->validPromoData([
+                'judul' => $item->judul,
+                'deskripsi_singkat' => $item->deskripsi_singkat,
+            ]),
             'poster' => $this->fakeImage('replacement.png'),
             'link_wa' => '',
         ])->assertRedirect(route('admin.event-promo.index'));
@@ -163,7 +173,7 @@ class EventPromoCrudTest extends TestCase
     public function test_home_exposes_cms_promotions_with_one_public_poster_url(): void
     {
         $creator = $this->userWithRole('admin');
-        $this->createEventPromo(
+        $promo = $this->createEventPromo(
             $creator,
             'event-promo/promo.jpg',
             'Promo dari CMS',
@@ -175,6 +185,8 @@ class EventPromoCrudTest extends TestCase
             ->has('promotions', 1)
             ->where('promotions.0.title', 'Promo dari CMS')
             ->where('promotions.0.description', 'Deskripsi singkat promo pengujian.')
+            ->where('promotions.0.detail', 'Deskripsi lengkap promo pengujian.')
+            ->where('promotions.0.period', $promo->periodLabel())
             ->where('promotions.0.poster_url', url('/storage/event-promo/promo.jpg'))
             ->where('promotions.0.link_wa', 'https://wa.me/628123456789')
             ->missing('promotions.0.poster')
@@ -185,7 +197,115 @@ class EventPromoCrudTest extends TestCase
     {
         $this->get('/')->assertInertia(fn (Assert $page) => $page
             ->component('Home')
-            ->has('promotions', 0));
+            ->has('promotions', 0)
+            ->where('promotionFallbackEnabled', true));
+    }
+
+    public function test_cms_home_is_available_to_admin_and_super_admin_but_not_user(): void
+    {
+        $this->actingAs($this->userWithRole('admin'))
+            ->get(route('dashboard.cms.home'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Internal/CMS/Home/Index')
+                ->has('promotions')
+                ->has('promoSummary'));
+
+        $this->actingAs($this->userWithRole('super_admin'))
+            ->get(route('dashboard.cms.home'))
+            ->assertOk();
+
+        $this->actingAs($this->userWithRole('user'))
+            ->get(route('dashboard.cms.home'))
+            ->assertForbidden();
+    }
+
+    public function test_cms_home_can_create_and_toggle_a_promo_using_the_shared_controller(): void
+    {
+        Storage::fake('public');
+        $admin = $this->userWithRole('admin');
+
+        $this->actingAs($admin)
+            ->post(route('dashboard.cms.home.promo.store'), [
+                ...$this->validPromoData(),
+                'poster' => $this->fakeImage('cms-promo.png'),
+            ])
+            ->assertRedirect(route('dashboard.cms.home'));
+
+        $promo = EventPromo::query()->sole();
+        $this->assertTrue($promo->is_active);
+
+        $this->actingAs($admin)
+            ->patch(route('dashboard.cms.home.promo.status', $promo))
+            ->assertRedirect(route('dashboard.cms.home'));
+
+        $this->assertFalse($promo->fresh()->is_active);
+        $this->assertSame($admin->id, $promo->fresh()->updated_by);
+    }
+
+    public function test_public_home_only_exposes_active_promotions_in_the_current_period_in_display_order(): void
+    {
+        $creator = $this->userWithRole('admin');
+        $today = now('Asia/Jakarta')->toImmutable();
+
+        $second = $this->createEventPromo($creator, 'event-promo/second.jpg', 'Urutan Kedua');
+        $second->update(['urutan_tampil' => 20]);
+        $first = $this->createEventPromo($creator, 'event-promo/first.jpg', 'Urutan Pertama');
+        $first->update(['urutan_tampil' => 10]);
+        $this->createEventPromo($creator, 'event-promo/scheduled.jpg', 'Terjadwal')->update([
+            'tanggal_mulai' => $today->addDay()->toDateString(),
+            'tanggal_selesai' => $today->addDays(2)->toDateString(),
+        ]);
+        $this->createEventPromo($creator, 'event-promo/expired.jpg', 'Berakhir')->update([
+            'tanggal_mulai' => $today->subDays(2)->toDateString(),
+            'tanggal_selesai' => $today->subDay()->toDateString(),
+        ]);
+        $this->createEventPromo($creator, 'event-promo/inactive.jpg', 'Nonaktif')->update(['is_active' => false]);
+        EventPromo::create([
+            'created_by' => $creator->id,
+            'judul' => 'Data Lama Tanpa Periode',
+            'deskripsi_singkat' => 'Tidak boleh tampil.',
+            'poster' => 'event-promo/legacy.jpg',
+        ]);
+
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->has('promotions', 2)
+            ->where('promotionFallbackEnabled', false)
+            ->where('promotions.0.title', 'Urutan Pertama')
+            ->where('promotions.1.title', 'Urutan Kedua'));
+    }
+
+    public function test_whatsapp_number_is_normalized_while_existing_url_is_presented_as_a_local_number(): void
+    {
+        Storage::fake('public');
+        $admin = $this->userWithRole('admin');
+        $legacy = $this->createEventPromo(
+            $admin,
+            'event-promo/legacy-whatsapp.jpg',
+            'Promo URL Lama',
+            'https://wa.me/628111111111',
+        );
+
+        $this->actingAs($admin)
+            ->get(route('dashboard.cms.home'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('promotions.0.link_wa', '08111111111')
+                ->where('promotions.0.link_wa_url', 'https://wa.me/628111111111'));
+
+        $this->actingAs($admin)
+            ->post(route('dashboard.cms.home.promo.store'), [
+                ...$this->validPromoData(['judul' => 'Promo Nomor Baru', 'link_wa' => '0812-3456-7890']),
+                'poster' => $this->fakeImage('normalized-whatsapp.png'),
+            ])
+            ->assertRedirect(route('dashboard.cms.home'));
+
+        $newPromo = EventPromo::query()->whereKeyNot($legacy->id)->sole();
+        $this->assertSame('6281234567890', $newPromo->link_wa);
+
+        $normalizer = app(WhatsAppNumber::class);
+        $this->assertSame('6281234567890', $normalizer->normalize('+62 812 3456 7890'));
+        $this->assertSame('6281234567890', $normalizer->normalize('6281234567890'));
+        $this->assertSame('6281234567890', $normalizer->normalize('https://wa.me/6281234567890'));
+        $this->assertSame('https://wa.me/6281234567890', $normalizer->toUrl($newPromo->link_wa));
     }
 
     private function userWithRole(string $roleName): User
@@ -206,9 +326,29 @@ class EventPromoCrudTest extends TestCase
             'updated_by' => null,
             'judul' => $title,
             'deskripsi_singkat' => 'Deskripsi singkat promo pengujian.',
+            'deskripsi_lengkap' => 'Deskripsi lengkap promo pengujian.',
             'poster' => $poster,
+            'tanggal_mulai' => now('Asia/Jakarta')->subDay()->toDateString(),
+            'tanggal_selesai' => now('Asia/Jakarta')->addDay()->toDateString(),
             'link_wa' => $linkWa,
+            'is_active' => true,
+            'urutan_tampil' => 0,
         ]);
+    }
+
+    private function validPromoData(array $overrides = []): array
+    {
+        return [
+            'judul' => 'Promo Pengujian',
+            'deskripsi_singkat' => 'Deskripsi singkat promo pengujian.',
+            'deskripsi_lengkap' => 'Deskripsi lengkap promo pengujian.',
+            'tanggal_mulai' => now('Asia/Jakarta')->subDay()->toDateString(),
+            'tanggal_selesai' => now('Asia/Jakarta')->addDay()->toDateString(),
+            'link_wa' => null,
+            'is_active' => true,
+            'urutan_tampil' => 0,
+            ...$overrides,
+        ];
     }
 
     private function fakeImage(string $name): UploadedFile

@@ -20,6 +20,9 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
-        $this->call(DevelopmentSeeder::class);
+        $this->call([
+            DevelopmentSeeder::class,
+            ClosingEventMasterSeeder::class,
+        ]);
     }
 }

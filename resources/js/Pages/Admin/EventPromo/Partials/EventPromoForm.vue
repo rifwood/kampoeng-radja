@@ -45,8 +45,20 @@ onBeforeUnmount(() => {
         </div>
 
         <div>
-            <InputLabel for="link_wa" value="Link WhatsApp (opsional)" />
-            <TextInput id="link_wa" v-model="form.link_wa" type="text" class="mt-1 block w-full" maxlength="255" placeholder="https://wa.me/628..." />
+            <InputLabel for="deskripsi_lengkap" value="Deskripsi Lengkap" />
+            <textarea id="deskripsi_lengkap" v-model="form.deskripsi_lengkap" rows="8" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            <InputError class="mt-2" :message="form.errors.deskripsi_lengkap" />
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-2">
+            <div><InputLabel for="tanggal_mulai" value="Tanggal Mulai" /><TextInput id="tanggal_mulai" v-model="form.tanggal_mulai" type="date" class="mt-1 block w-full" required /><InputError class="mt-2" :message="form.errors.tanggal_mulai" /></div>
+            <div><InputLabel for="tanggal_selesai" value="Tanggal Selesai" /><TextInput id="tanggal_selesai" v-model="form.tanggal_selesai" type="date" class="mt-1 block w-full" required /><InputError class="mt-2" :message="form.errors.tanggal_selesai" /></div>
+        </div>
+
+        <div>
+            <InputLabel for="link_wa" value="Nomor WhatsApp (opsional)" />
+            <TextInput id="link_wa" v-model="form.link_wa" type="tel" inputmode="tel" autocomplete="tel" class="mt-1 block w-full" maxlength="24" placeholder="081234567890" />
+            <p class="mt-1 text-xs text-gray-500">Masukkan nomor WhatsApp yang dapat dihubungi untuk promo ini.</p>
             <InputError class="mt-2" :message="form.errors.link_wa" />
         </div>
 
@@ -55,7 +67,12 @@ onBeforeUnmount(() => {
             <input id="poster" type="file" accept="image/jpeg,image/png,image/webp" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-primary-blue file:px-4 file:py-2 file:font-semibold file:text-white" :required="!currentPosterUrl" @change="selectPoster" />
             <p class="mt-2 text-xs text-gray-500">JPG, PNG, atau WebP. Maksimal 5 MB.</p>
             <InputError class="mt-2" :message="form.errors.poster" />
-            <img v-if="previewUrl" :src="previewUrl" alt="Preview poster Event & Promotion" class="mt-4 aspect-[4/5] w-full max-w-72 rounded-lg border border-gray-200 object-cover" />
+            <img v-if="previewUrl" :src="previewUrl" alt="Preview poster Promo" class="mt-4 aspect-[4/5] w-full max-w-72 rounded-lg border border-gray-200 object-cover" />
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-2 sm:items-end">
+            <div><InputLabel for="urutan_tampil" value="Urutan Tampil" /><TextInput id="urutan_tampil" v-model="form.urutan_tampil" type="number" min="0" class="mt-1 block w-full" required /><InputError class="mt-2" :message="form.errors.urutan_tampil" /></div>
+            <label class="flex h-10 items-center gap-3 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700"><input v-model="form.is_active" type="checkbox" class="rounded border-gray-300 text-primary-blue focus:ring-primary-blue" /> Status Aktif</label>
         </div>
 
         <div class="flex items-center justify-end gap-3 border-t border-gray-200 pt-6">

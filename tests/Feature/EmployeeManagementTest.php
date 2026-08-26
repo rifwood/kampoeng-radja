@@ -46,10 +46,31 @@ class EmployeeManagementTest extends TestCase
             ->component('Internal/Employee/Index')
             ->where('permissions.canManage', true)
             ->has('employees.data', 2)
+            ->has('employees.data.0.name')
+            ->has('employees.data.0.gender')
+            ->has('employees.data.0.religion')
+            ->has('employees.data.0.birthDate')
+            ->has('employees.data.0.birthPlace')
+            ->has('employees.data.0.education')
+            ->has('employees.data.0.position')
+            ->has('employees.data.0.department')
+            ->has('employees.data.0.employmentStatus')
+            ->has('employees.data.0.activeStatus')
+            ->has('employees.data.0.joinedAt')
+            ->has('employees.data.0.leftAt')
             ->has('employees.data.0.nik'));
+
+        $admin->karyawan->update(['foto_ktp' => 'employee-ktp/super-admin.jpg']);
+        $this->actingAs($admin)->get(route('dashboard.karyawan.show', $admin->karyawan))->assertInertia(fn (Assert $page) => $page
+            ->has('employee.name')->has('employee.gender')->has('employee.religion')
+            ->has('employee.birthDate')->has('employee.birthPlace')->has('employee.education')
+            ->has('employee.position')->has('employee.department')->has('employee.employmentStatus')
+            ->has('employee.activeStatus')->has('employee.joinedAt')->has('employee.leftAt')
+            ->has('employee.nik')->has('employee.address')->has('employee.maritalStatus')
+            ->has('employee.phone')->where('employee.hasKtpPhoto', true)->has('employee.ktpPhotoUrl'));
     }
 
-    public function test_admin_is_department_scoped_and_receives_no_sensitive_fields(): void
+    public function test_admin_has_company_wide_scope_and_receives_no_sensitive_fields(): void
     {
         $admin = $this->userWithRole('admin');
         $same = User::factory()->create()->karyawan;
@@ -60,36 +81,85 @@ class EmployeeManagementTest extends TestCase
 
         $this->actingAs($admin)->get('/dashboard/karyawan')->assertInertia(fn (Assert $page) => $page
             ->where('permissions.canManage', false)
-            ->has('employees.data', 2)
+            ->where('permissions.canSearch', true)
+            ->where('masterData.departemen', fn ($items) => collect($items)->pluck('id')->contains($otherDepartment->id))
+            ->has('employees.data', 3)
             ->where('employees.data', fn ($items) => collect($items)->pluck('name')->contains('Dalam Departemen')
-                && ! collect($items)->pluck('name')->contains('Rahasia Luar'))
-            ->missing('employees.data.0.nik'));
+                && collect($items)->pluck('name')->contains('Rahasia Luar'))
+            ->has('employees.data.0.name')->has('employees.data.0.gender')->has('employees.data.0.religion')
+            ->has('employees.data.0.birthDate')->has('employees.data.0.birthPlace')->has('employees.data.0.education')
+            ->has('employees.data.0.position')->has('employees.data.0.department')->has('employees.data.0.employmentStatus')
+            ->has('employees.data.0.activeStatus')->has('employees.data.0.joinedAt')->has('employees.data.0.leftAt')
+            ->missing('employees.data.0.nik')->missing('employees.data.0.address')
+            ->missing('employees.data.0.maritalStatus')->missing('employees.data.0.phone')
+            ->missing('employees.data.0.hasKtpPhoto')->missing('employees.data.0.ktpPhotoUrl'));
 
         $this->actingAs($admin)->get(route('dashboard.karyawan.show', $same))->assertInertia(fn (Assert $page) => $page
+            ->has('employee.name')->has('employee.gender')->has('employee.religion')
+            ->has('employee.birthDate')->has('employee.birthPlace')->has('employee.education')
+            ->has('employee.position')->has('employee.department')->has('employee.employmentStatus')
+            ->has('employee.activeStatus')->has('employee.joinedAt')->has('employee.leftAt')
+            ->missing('employee.nik')->missing('employee.address')->missing('employee.maritalStatus')
+            ->missing('employee.phone')->missing('employee.hasKtpPhoto')->missing('employee.ktpPhotoUrl')
+            ->missing('employee.account')->missing('employee.accountRole'));
+        $this->actingAs($admin)->get(route('dashboard.karyawan.show', $outside))->assertInertia(fn (Assert $page) => $page
+            ->where('employee.name', 'Rahasia Luar')
+            ->has('employee.department')
             ->missing('employee.nik')->missing('employee.address')->missing('employee.maritalStatus')
             ->missing('employee.phone')->missing('employee.hasKtpPhoto')->missing('employee.ktpPhotoUrl'));
-        $this->actingAs($admin)->get(route('dashboard.karyawan.show', $outside))->assertNotFound();
+
+        $this->actingAs($admin)->get('/dashboard/karyawan?departemen_id='.$otherDepartment->id)->assertInertia(fn (Assert $page) => $page
+            ->has('employees.data', 1)
+            ->where('employees.data.0.id', $outside->id)
+            ->missing('employees.data.0.nik'));
     }
 
-    public function test_admin_without_department_has_empty_scope(): void
+    public function test_admin_without_department_still_has_company_wide_scope(): void
     {
         $admin = $this->userWithRole('admin');
         $admin->karyawan->update(['departemen_id' => null]);
+        $outside = User::factory()->create()->karyawan;
 
         $this->actingAs($admin)->get('/dashboard/karyawan')->assertInertia(fn (Assert $page) => $page
-            ->has('employees.data', 0));
+            ->has('employees.data', 2)
+            ->where('employees.data', fn ($items) => collect($items)->pluck('id')->contains($admin->karyawan_id)
+                && collect($items)->pluck('id')->contains($outside->id)));
     }
 
-    public function test_user_is_self_only_and_mutation_endpoints_are_forbidden(): void
+    public function test_user_has_company_wide_read_only_scope_and_mutation_endpoints_are_forbidden(): void
     {
         $user = $this->userWithRole('user');
         $outside = User::factory()->create()->karyawan;
 
         $this->actingAs($user)->get('/dashboard/karyawan')->assertInertia(fn (Assert $page) => $page
-            ->has('employees.data', 1)
-            ->where('employees.data.0.id', $user->karyawan_id)
-            ->missing('employees.data.0.nik'));
-        $this->actingAs($user)->get(route('dashboard.karyawan.show', $outside))->assertNotFound();
+            ->where('permissions.canSearch', true)
+            ->has('employees.data', 2)
+            ->where('employees.data', fn ($items) => collect($items)->pluck('id')->contains($user->karyawan_id)
+                && collect($items)->pluck('id')->contains($outside->id))
+            ->has('employees.data.0.name')->has('employees.data.0.gender')->has('employees.data.0.religion')
+            ->has('employees.data.0.birthDate')->has('employees.data.0.birthPlace')->has('employees.data.0.education')
+            ->has('employees.data.0.position')->has('employees.data.0.department')->has('employees.data.0.employmentStatus')
+            ->has('employees.data.0.activeStatus')->has('employees.data.0.joinedAt')->has('employees.data.0.leftAt')
+            ->missing('employees.data.0.nik')->missing('employees.data.0.address')
+            ->missing('employees.data.0.maritalStatus')->missing('employees.data.0.phone')
+            ->missing('employees.data.0.hasKtpPhoto')->missing('employees.data.0.ktpPhotoUrl'));
+        $this->actingAs($user)->get(route('dashboard.karyawan.show', $user->karyawan))->assertInertia(fn (Assert $page) => $page
+            ->has('employee.name')->has('employee.gender')->has('employee.religion')
+            ->has('employee.birthDate')->has('employee.birthPlace')->has('employee.education')
+            ->has('employee.position')->has('employee.department')->has('employee.employmentStatus')
+            ->has('employee.activeStatus')->has('employee.joinedAt')->has('employee.leftAt')
+            ->missing('employee.nik')->missing('employee.address')->missing('employee.maritalStatus')
+            ->missing('employee.phone')->missing('employee.hasKtpPhoto')->missing('employee.ktpPhotoUrl')
+            ->missing('employee.account')->missing('employee.accountRole'));
+        $this->actingAs($user)->get(route('dashboard.karyawan.show', $outside))->assertInertia(fn (Assert $page) => $page
+            ->where('employee.id', $outside->id)
+            ->has('employee.name')->has('employee.gender')->has('employee.religion')
+            ->has('employee.birthDate')->has('employee.birthPlace')->has('employee.education')
+            ->has('employee.position')->has('employee.department')->has('employee.employmentStatus')
+            ->has('employee.activeStatus')->has('employee.joinedAt')->has('employee.leftAt')
+            ->missing('employee.nik')->missing('employee.address')->missing('employee.maritalStatus')
+            ->missing('employee.phone')->missing('employee.hasKtpPhoto')->missing('employee.ktpPhotoUrl')
+            ->missing('employee.account')->missing('employee.accountRole'));
         $this->actingAs($user)->get('/dashboard/karyawan/create')->assertForbidden();
         $this->actingAs($user)->post('/dashboard/karyawan', [])->assertForbidden();
         $this->actingAs($user)->get('/dashboard/jabatan-departemen')->assertForbidden();

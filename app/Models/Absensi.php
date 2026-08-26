@@ -13,8 +13,17 @@ class Absensi extends Model
         'karyawan_id',
         'tanggal_absensi',
         'status_kehadiran',
+        'jam_masuk',
+        'jam_keluar',
         'keterangan',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'tanggal_absensi' => 'date',
+        ];
+    }
 
     public function karyawan(): BelongsTo
     {

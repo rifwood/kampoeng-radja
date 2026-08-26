@@ -33,9 +33,11 @@ Kombinasi aktual tidak boleh ditebak. Jika belum diputuskan, tulis `TBD — menu
 - Guest hanya boleh mengakses route publik dan login.
 - Akun internal harus aktif (`users.is_active = true`).
 - Middleware `admin` saat ini mengizinkan role aktif `admin` dan `super_admin` ke area `/admin`.
-- Middleware `super_admin` saat ini membatasi Data Absensi ke role aktif `super_admin`.
+- Route view Data Absensi dilindungi `auth + active`; capability backend memberikan akses view company-wide kepada `super_admin`, `admin`, dan `user`.
+- Mutation dan export Excel Absensi tetap dibatasi backend kepada `super_admin`; hide/show frontend hanya digunakan untuk UX.
 - CRUD Media Berita dan Event Promo dilindungi backend oleh `auth + admin`.
 - Role tidak disimpan manual di session; nilai dibaca dari relasi database.
+- Untuk akun Karyawan, Jabatan adalah sumber authoritative bagi mapping `users.role_id`; perubahan Jabatan akun existing menyinkronkan role secara transaksional dan request berikutnya memakai role database terbaru.
 
 Daftar di atas adalah **implementation truth**, bukan keputusan permission final untuk modul yang masih TBD.
 

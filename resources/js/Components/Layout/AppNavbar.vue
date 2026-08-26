@@ -26,11 +26,11 @@ onBeforeUnmount(() => window.removeEventListener('scroll', updateScroll));
             class="mx-auto flex h-[68px] max-w-[1120px] items-center justify-between rounded-2xl border px-4 transition-[background-color,box-shadow,border-color] duration-300 lg:h-[76px] lg:px-7"
             aria-label="Navigasi utama"
         >
-            <Link :href="route('home')" class="flex h-full items-center">
+            <Link :href="route('home')" class="flex h-full min-w-0 items-center">
                 <img
-                    src="/assets/figma/logo-main-transparent.png"
+                    src="/assets/brand/kampoeng-radja-navbar.png"
                     alt="Taman Wisata Kampoeng Radja"
-                    class="h-[58px] w-auto object-contain lg:h-[65px]"
+                    class="h-[42px] w-auto max-w-[210px] object-contain sm:h-[46px] md:h-[50px] lg:h-[54px]"
                 >
             </Link>
             <button

@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\EventPromo;
 use App\Models\GaleriEvent;
+use App\Models\HomeHero;
 use App\Models\MediaBerita;
 use App\Models\Mitra;
 use App\Models\Wahana;
+use App\Support\WhatsAppNumber;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,25 +18,61 @@ class PublicPageController extends Controller
 {
     public function home(): Response
     {
+        $today = CarbonImmutable::now('Asia/Jakarta')->toDateString();
+
         return Inertia::render('Home', [
+            'hero' => $this->formatHomeHero(HomeHero::query()->first()),
             'news' => MediaBerita::query()
                 ->latest('tanggal_publish')
                 ->take(3)
                 ->get()
                 ->map(fn (MediaBerita $item): array => $this->formatMediaBerita($item)),
             'promotions' => EventPromo::query()
-                ->latest()
-                ->take(3)
+                ->where('is_active', true)
+                ->whereDate('tanggal_mulai', '<=', $today)
+                ->whereDate('tanggal_selesai', '>=', $today)
+                ->orderBy('urutan_tampil')
+                ->orderBy('id')
                 ->get()
                 ->map(fn (EventPromo $item): array => $this->formatEventPromo($item)),
+            'promotionFallbackEnabled' => ! EventPromo::query()->exists(),
             'partners' => Mitra::query()->where('is_active', true)->orderBy('nama_brand')->get()
                 ->map(fn (Mitra $mitra) => ['id' => $mitra->id, 'name' => $mitra->nama_brand, 'logo' => $mitra->logo]),
             'featuredRides' => Wahana::query()
+                ->with(['fotos' => fn ($query) => $query->orderBy('urutan')->orderBy('id')])
+                ->where('is_active', true)
                 ->where('is_unggulan', true)
+                ->orderBy('urutan_tampil')
+                ->orderBy('id')
                 ->take(3)
                 ->get()
                 ->map(fn (Wahana $wahana) => $this->formatWahana($wahana)),
+            'featuredRideFallbackEnabled' => ! Wahana::query()->exists(),
         ]);
+    }
+
+    /**
+     * @return array<string, int|string|null>|null
+     */
+    private function formatHomeHero(?HomeHero $hero): ?array
+    {
+        if (! $hero) {
+            return null;
+        }
+
+        return [
+            'id' => $hero->id,
+            'video_url' => $hero->video_path ? Storage::disk('public')->url($hero->video_path) : null,
+            'poster_url' => $hero->poster_path ? Storage::disk('public')->url($hero->poster_path) : null,
+            'eyebrow' => $hero->eyebrow,
+            'judul' => $hero->judul,
+            'tagline' => $hero->tagline,
+            'deskripsi' => $hero->deskripsi,
+            'cta_primary_label' => $hero->cta_primary_label,
+            'cta_primary_url' => $hero->cta_primary_url,
+            'cta_secondary_label' => $hero->cta_secondary_label,
+            'cta_secondary_url' => $hero->cta_secondary_url,
+        ];
     }
 
     public function about(): Response
@@ -55,45 +94,72 @@ class PublicPageController extends Controller
     {
         return Inertia::render('Wahana', [
             'categories' => $this->wahanaCategories(),
-            'photos' => Wahana::query()->latest()->get()->map(fn (Wahana $wahana) => $this->formatWahana($wahana)),
+            'photos' => Wahana::query()
+                ->with(['fotos' => fn ($query) => $query->orderBy('urutan')->orderBy('id')])
+                ->where('is_active', true)
+                ->orderBy('urutan_tampil')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (Wahana $wahana) => $this->formatWahana($wahana)),
+            'wahanaFallbackEnabled' => ! Wahana::query()->exists(),
         ]);
     }
 
     public function events(): Response
     {
         return Inertia::render('GaleriEvent', [
-            'events' => GaleriEvent::query()->with('photos')->latest('tanggal_event')->get()
+            'events' => GaleriEvent::query()
+                ->with(['photos' => fn ($query) => $query
+                    ->orderByRaw('CASE WHEN urutan IS NULL THEN 1 ELSE 0 END')
+                    ->orderBy('urutan')
+                    ->orderBy('id')])
+                ->orderByDesc('tanggal_event')
+                ->orderByDesc('id')
+                ->get()
                 ->map(fn (GaleriEvent $event) => [
                     'id' => $event->id,
+                    'nama_event' => $event->nama_event,
+                    'tanggal_event' => $event->tanggal_event?->toDateString(),
+                    'deskripsi' => $event->deskripsi,
+                    // Aliases dipertahankan sementara agar tampilan publik existing tetap kompatibel.
                     'title' => $event->nama_event,
                     'description' => $event->deskripsi,
                     'event_date' => $event->tanggal_event?->toDateString(),
                     'photos' => $event->photos->map(fn ($photo) => [
                         'id' => $photo->id,
-                        'photo_path' => $photo->foto,
-                        'alt_text' => $photo->caption,
-                    ]),
+                        'url' => Storage::disk('public')->url($photo->foto),
+                        'caption' => $photo->caption,
+                        'urutan' => $photo->urutan,
+                    ])->values(),
                 ]),
         ]);
     }
 
     private function formatWahana(Wahana $wahana): array
     {
-        $labels = collect(explode(',', (string) $wahana->label))
-            ->map(fn (string $label) => trim($label))
-            ->filter()
-            ->values()
+        $labels = collect($wahana->labels())
             ->map(fn (string $label, int $index) => [
                 'id' => $wahana->id.'-'.$index,
                 'name' => $label,
                 'slug' => str($label)->slug()->toString(),
             ]);
 
+        $photos = $wahana->fotos->isNotEmpty()
+            ? $wahana->fotos->map(fn ($photo): array => [
+                'id' => $photo->id,
+                'url' => Storage::disk('public')->url($photo->foto),
+            ])->values()
+            : collect([[
+                'id' => 'legacy-'.$wahana->id,
+                'url' => Storage::disk('public')->url($wahana->foto),
+            ]]);
+
         return [
             'id' => $wahana->id,
             'title' => $wahana->nama_wahana,
             'description' => $wahana->deskripsi_singkat,
-            'photo_path' => $wahana->foto,
+            'cover_url' => $photos->first()['url'],
+            'photos' => $photos,
             'alt_text' => $wahana->nama_wahana,
             'labels' => $labels,
         ];
@@ -122,14 +188,18 @@ class PublicPageController extends Controller
             'id' => $item->id,
             'title' => $item->judul,
             'description' => $item->deskripsi_singkat,
+            'detail' => $item->deskripsi_lengkap,
+            'period' => $item->periodLabel(),
+            'tanggal_mulai' => $item->tanggal_mulai?->toDateString(),
+            'tanggal_selesai' => $item->tanggal_selesai?->toDateString(),
             'poster_url' => Storage::disk('public')->url($item->poster),
-            'link_wa' => $item->link_wa,
+            'link_wa' => app(WhatsAppNumber::class)->toUrl($item->link_wa),
         ];
     }
 
     private function wahanaCategories(): array
     {
-        $labels = Wahana::query()->whereNotNull('label')->pluck('label')
+        $labels = Wahana::query()->where('is_active', true)->whereNotNull('label')->pluck('label')
             ->flatMap(fn (string $labels) => explode(',', $labels))
             ->map(fn (string $label) => trim($label))
             ->filter()

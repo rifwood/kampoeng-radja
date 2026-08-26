@@ -9,7 +9,13 @@ class GaleriEvent extends Model
 {
     protected $table = 'galeri_event';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'nama_event',
+        'deskripsi',
+        'tanggal_event',
+        'created_by',
+        'updated_by',
+    ];
 
     protected function casts(): array
     {
@@ -18,6 +24,9 @@ class GaleriEvent extends Model
 
     public function photos(): HasMany
     {
-        return $this->hasMany(GaleriEventFoto::class, 'galeri_event_id');
+        return $this->hasMany(GaleriEventFoto::class, 'galeri_event_id')
+            ->orderByRaw('CASE WHEN urutan IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('urutan')
+            ->orderBy('id');
     }
 }

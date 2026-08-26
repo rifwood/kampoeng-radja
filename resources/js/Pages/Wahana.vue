@@ -5,20 +5,21 @@ import PublicLayout from '../Layouts/PublicLayout.vue';
 import BaseModal from '../Components/Base/BaseModal.vue';
 import LazyImage from '../Components/Base/LazyImage.vue';
 
-const props = defineProps({ categories: Array, photos: Array });
+const props = defineProps({ categories: Array, photos: Array, wahanaFallbackEnabled: Boolean });
 const selected = ref([]);
 const applied = ref([]);
 const preview = ref(null);
+const imageIndexes = ref({});
 
 const fallbackPhotos = [
-    { id: 'waterpark', title: 'Waterpark', description: 'Nikmati keseruan bermain air bersama keluarga di kolam luas dengan berbagai perosotan seru.', photo_path: '/assets/temporary/ride-waterpark.png', labels: [{ id: 'air', name: 'Air', slug: 'air' }, { id: 'anak', name: 'Anak-anak', slug: 'anak-anak' }] },
-    { id: 'flying-fox', title: 'Flying Fox', description: 'Rasakan sensasi meluncur dari ketinggian melintasi pepohonan hijau yang menyegarkan.', photo_path: '/assets/temporary/ride-flying-fox.png', labels: [{ id: 'darat', name: 'Darat', slug: 'darat' }, { id: 'adrenalin', name: 'Adrenalin', slug: 'adrenalin' }] },
-    { id: 'go-kart', title: 'Go Kart', description: 'Uji adrenalin dan kemampuan mengemudi Anda di sirkuit Go Kart menantang kami.', photo_path: '/assets/temporary/ride-go-kart.png', labels: [{ id: 'darat2', name: 'Darat', slug: 'darat' }, { id: 'dewasa', name: 'Dewasa', slug: 'dewasa' }] },
-    { id: 'perahu', title: 'Perahu Bebek', description: 'Bersantai mengelilingi danau buatan dengan perahu bebek kayuh bersama pasangan atau teman.', photo_path: '/assets/temporary/ride-perahu-bebek.png', labels: [{ id: 'air2', name: 'Air', slug: 'air' }, { id: 'dewasa2', name: 'Dewasa', slug: 'dewasa' }] },
-    { id: 'carousel', title: 'Carousel', description: 'Wahana klasik komidi putar yang selalu menjadi favorit anak-anak dengan iringan musik ceria.', photo_path: '/assets/temporary/ride-carousel.png', labels: [{ id: 'darat3', name: 'Darat', slug: 'darat' }, { id: 'anak2', name: 'Anak-anak', slug: 'anak-anak' }] },
+    { id: 'waterpark', title: 'Waterpark', description: 'Nikmati keseruan bermain air bersama keluarga di kolam luas dengan berbagai perosotan seru.', photos: [{ id: 'waterpark-1', url: '/assets/temporary/ride-waterpark.png' }], labels: [{ id: 'air', name: 'Air', slug: 'air' }, { id: 'anak', name: 'Anak-anak', slug: 'anak-anak' }] },
+    { id: 'flying-fox', title: 'Flying Fox', description: 'Rasakan sensasi meluncur dari ketinggian melintasi pepohonan hijau yang menyegarkan.', photos: [{ id: 'flying-fox-1', url: '/assets/temporary/ride-flying-fox.png' }], labels: [{ id: 'darat', name: 'Darat', slug: 'darat' }, { id: 'adrenaline', name: 'Adrenaline', slug: 'adrenaline' }] },
+    { id: 'go-kart', title: 'Go Kart', description: 'Uji adrenalin dan kemampuan mengemudi Anda di sirkuit Go Kart menantang kami.', photos: [{ id: 'go-kart-1', url: '/assets/temporary/ride-go-kart.png' }], labels: [{ id: 'darat2', name: 'Darat', slug: 'darat' }, { id: 'dewasa', name: 'Dewasa', slug: 'dewasa' }] },
+    { id: 'perahu', title: 'Perahu Bebek', description: 'Bersantai mengelilingi danau buatan dengan perahu bebek kayuh bersama pasangan atau teman.', photos: [{ id: 'perahu-1', url: '/assets/temporary/ride-perahu-bebek.png' }], labels: [{ id: 'air2', name: 'Air', slug: 'air' }, { id: 'dewasa2', name: 'Dewasa', slug: 'dewasa' }] },
+    { id: 'carousel', title: 'Carousel', description: 'Wahana klasik komidi putar yang selalu menjadi favorit anak-anak dengan iringan musik ceria.', photos: [{ id: 'carousel-1', url: '/assets/temporary/ride-carousel.png' }], labels: [{ id: 'darat3', name: 'Darat', slug: 'darat' }, { id: 'anak2', name: 'Anak-anak', slug: 'anak-anak' }] },
 ];
 
-const allPhotos = computed(() => props.photos?.length ? props.photos : fallbackPhotos);
+const allPhotos = computed(() => props.photos?.length ? props.photos : (props.wahanaFallbackEnabled ? fallbackPhotos : []));
 const availableLabels = computed(() => {
     const labels = props.categories?.flatMap((category) => category.labels || []) || [];
     return labels.length ? labels : [
@@ -26,7 +27,7 @@ const availableLabels = computed(() => {
         { id: 'dewasa', name: 'Dewasa', slug: 'dewasa' },
         { id: 'air', name: 'Air', slug: 'air' },
         { id: 'darat', name: 'Darat', slug: 'darat' },
-        { id: 'adrenalin', name: 'Adrenalin', slug: 'adrenalin' },
+        { id: 'adrenaline', name: 'Adrenaline', slug: 'adrenaline' },
         { id: 'santai', name: 'Santai', slug: 'santai' },
     ];
 });
@@ -34,7 +35,21 @@ const toggle = (slug) => { selected.value = selected.value.includes(slug) ? sele
 const results = computed(() => allPhotos.value.filter((photo) => applied.value.every((slug) => photo.labels.some((label) => label.slug === slug))));
 const apply = () => { applied.value = [...selected.value]; };
 const reset = () => { selected.value = []; applied.value = []; };
-const badgeTone = (name) => name === 'Air' ? 'bg-[#e0f2fe] text-[#0369a1]' : name === 'Adrenalin' ? 'bg-[#fce7f3] text-[#be185d]' : name === 'Darat' ? 'bg-[#dcfce7] text-[#15803d]' : 'bg-[#fef9c3] text-[#a16207]';
+const badgeTone = (name) => name === 'Air' ? 'bg-[#e0f2fe] text-[#0369a1]' : name === 'Adrenaline' ? 'bg-[#fce7f3] text-[#be185d]' : name === 'Darat' ? 'bg-[#dcfce7] text-[#15803d]' : 'bg-[#fef9c3] text-[#a16207]';
+const activeImageIndex = (photo) => {
+    const total = photo?.photos?.length || 1;
+    return (imageIndexes.value[photo?.id] || 0) % total;
+};
+const activePhoto = (photo) => photo?.photos?.[activeImageIndex(photo)] || null;
+const changePhoto = (photo, direction) => {
+    const total = photo.photos?.length || 0;
+    if (total <= 1) return;
+
+    imageIndexes.value = {
+        ...imageIndexes.value,
+        [photo.id]: (activeImageIndex(photo) + direction + total) % total,
+    };
+};
 </script>
 
 <template>
@@ -55,17 +70,28 @@ const badgeTone = (name) => name === 'Air' ? 'bg-[#e0f2fe] text-[#0369a1]' : nam
                 </section>
                 <p class="mt-4 text-xs text-[#737686]">Filter menerapkan semua label terpilih sekaligus (AND).</p>
                 <section v-if="results.length" class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    <button v-for="photo in results" :key="photo.id" type="button" class="overflow-hidden rounded-2xl border border-[#e0e3e5] bg-white text-left shadow-[0_1px_2px_rgba(0,0,0,.05)]" @click="preview = photo">
-                        <LazyImage :src="photo.photo_path" :alt="photo.alt_text || photo.title" class-name="h-[194px] w-full object-cover" />
-                        <div class="p-4"><div class="flex flex-wrap gap-2"><span v-for="label in photo.labels" :key="label.id" :class="badgeTone(label.name)" class="rounded-full px-2 py-1 text-[9px] font-bold">{{ label.name }}</span></div><h2 class="mt-3 font-heading text-xl font-bold text-[#191c1e]">{{ photo.title }}</h2><p class="mt-2 text-xs leading-4 text-[#434655]">{{ photo.description }}</p></div>
-                    </button>
+                    <article v-for="photo in results" :key="photo.id" class="overflow-hidden rounded-2xl border border-[#e0e3e5] bg-white text-left shadow-[0_1px_2px_rgba(0,0,0,.05)]">
+                        <div class="relative h-[194px] overflow-hidden bg-slate-100">
+                            <button type="button" class="block h-full w-full" :aria-label="`Lihat detail ${photo.title}`" @click="preview = photo">
+                                <Transition name="ride-photo" mode="out-in">
+                                    <LazyImage :key="activePhoto(photo)?.id" :src="activePhoto(photo)?.url" :alt="photo.alt_text || photo.title" class-name="h-[194px] w-full object-cover" />
+                                </Transition>
+                            </button>
+                            <template v-if="photo.photos?.length > 1">
+                                <button type="button" class="ride-photo-nav left-3" :aria-label="`Foto sebelumnya untuk ${photo.title}`" @click="changePhoto(photo, -1)">‹</button>
+                                <button type="button" class="ride-photo-nav right-3" :aria-label="`Foto berikutnya untuk ${photo.title}`" @click="changePhoto(photo, 1)">›</button>
+                                <span class="absolute bottom-3 right-3 rounded-full bg-slate-950/65 px-2 py-1 text-[9px] font-bold text-white">{{ activeImageIndex(photo) + 1 }} / {{ photo.photos.length }}</span>
+                            </template>
+                        </div>
+                        <button type="button" class="block w-full p-4 text-left" @click="preview = photo"><div class="flex flex-wrap gap-2"><span v-for="label in photo.labels" :key="label.id" :class="badgeTone(label.name)" class="rounded-full px-2 py-1 text-[9px] font-bold">{{ label.name }}</span></div><h2 class="mt-3 font-heading text-xl font-bold text-[#191c1e]">{{ photo.title }}</h2><p class="mt-2 text-xs leading-4 text-[#434655]">{{ photo.description }}</p></button>
+                    </article>
                 </section>
                 <section v-else class="mt-8 rounded-2xl border border-[#e0e3e5] bg-white p-10 text-center"><h2 class="font-heading text-2xl">Belum ada wahana dengan kombinasi filter ini</h2><p class="mt-2 text-sm text-[#434655]">Coba hapus salah satu label atau tekan Reset.</p></section>
             </div>
         </main>
         <BaseModal :open="Boolean(preview)" :title="preview?.title || 'Detail wahana'" panel-class="ride-modal-panel max-w-5xl" @close="preview = null">
             <div class="ride-modal-grid">
-                <div class="ride-modal-media"><LazyImage :src="preview?.photo_path" :alt="preview?.alt_text || preview?.title || ''" class-name="ride-modal-image" /></div>
+                <div class="ride-modal-media"><LazyImage :src="activePhoto(preview)?.url" :alt="preview?.alt_text || preview?.title || ''" class-name="ride-modal-image" /></div>
                 <div class="ride-modal-detail"><p class="ride-modal-eyebrow">Detail Wahana</p><h3 class="ride-modal-title">{{ preview?.title }}</h3><p class="ride-modal-copy">{{ preview?.description }}</p><div class="ride-modal-badges"><span v-for="label in preview?.labels || []" :key="label.id" :class="badgeTone(label.name)" class="rounded-full px-3 py-1.5 text-[10px] font-bold">{{ label.name }}</span></div></div>
             </div>
         </BaseModal>
@@ -73,6 +99,10 @@ const badgeTone = (name) => name === 'Air' ? 'bg-[#e0f2fe] text-[#0369a1]' : nam
 </template>
 
 <style scoped>
+.ride-photo-nav { position:absolute; top:50%; z-index:2; display:grid; height:34px; width:34px; transform:translateY(-50%); place-items:center; border:1px solid rgba(255,255,255,.72); border-radius:999px; color:#fff; background:rgba(3,43,84,.7); font-size:24px; line-height:1; backdrop-filter:blur(4px); transition:background-color .2s ease,transform .2s ease; }
+.ride-photo-nav:hover { background:rgba(7,84,199,.92); transform:translateY(-50%) scale(1.04); }
+.ride-photo-enter-active,.ride-photo-leave-active { transition:opacity 350ms ease; }
+.ride-photo-enter-from,.ride-photo-leave-to { opacity:0; }
 main { min-height:100vh; background:radial-gradient(circle at 8% 5%,rgba(255,157,66,.16) 0 110px,transparent 111px),radial-gradient(circle at 94% 20%,rgba(45,169,234,.16) 0 150px,transparent 151px),linear-gradient(180deg,#edf8ff,#fff8ef) !important; }
 main header h1 { color:#063b76; text-shadow:0 3px 12px rgba(7,120,222,.12); }
 main header h1::after { display:block; width:90px; height:6px; margin:16px auto 0; content:''; border-radius:999px; background:linear-gradient(90deg,#2da9ea 0 62%,#ff8a1f 62%); }
@@ -83,12 +113,12 @@ main header + section > div:first-child > div:last-child button:first-child { ba
 main header + section > div:first-child > div:last-child button:last-child { border:2px solid #ff9d42; color:#c95600; background:#fff8ef; }
 main header + section > div:last-child button { transition:transform .18s ease,box-shadow .18s ease; }
 main header + section > div:last-child button:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(4,69,133,.12); }
-main > div > section:nth-of-type(2) > button { border:2px solid #fff; border-top:5px solid #2da9ea; border-radius:24px; box-shadow:0 12px 28px rgba(4,69,133,.12); transition:transform .22s ease,box-shadow .22s ease; }
-main > div > section:nth-of-type(2) > button:nth-child(even) { border-top-color:#ff9d42; }
-main > div > section:nth-of-type(2) > button:hover { transform:translateY(-6px); box-shadow:0 20px 36px rgba(4,69,133,.2); }
-main > div > section:nth-of-type(2) > button h2 { color:#063b76; }
+main > div > section:nth-of-type(2) > article { border:2px solid #fff; border-top:5px solid #2da9ea; border-radius:24px; box-shadow:0 12px 28px rgba(4,69,133,.12); transition:transform .22s ease,box-shadow .22s ease; }
+main > div > section:nth-of-type(2) > article:nth-child(even) { border-top-color:#ff9d42; }
+main > div > section:nth-of-type(2) > article:hover { transform:translateY(-6px); box-shadow:0 20px 36px rgba(4,69,133,.2); }
+main > div > section:nth-of-type(2) > article h2 { color:#063b76; }
 main > div > section:last-child { border:2px dashed #ff9d42; background:#fff8ef; }
-@media (max-width:767px) { main { padding-top:44px; } main > div > section:nth-of-type(2) > button:hover, main header + section > div:last-child button:hover { transform:none; } }
+@media (max-width:767px) { main { padding-top:44px; } main > div > section:nth-of-type(2) > article:hover, main header + section > div:last-child button:hover { transform:none; } }
 </style>
 
 <style>

@@ -154,117 +154,38 @@ Data Karyawan
 
 Admin dan User tidak melihat menu Kelola Karyawan maupun submenu Jabatan & Departemen.
 
-5. Submenu Data Karyawan - Super Admin
+5. Field Visibility Data Karyawan
 
-Tabel Data Karyawan menampilkan seluruh atribut berikut:
+Field visibility berlaku pada list dan Detail Karyawan. Super Admin, Admin, dan User memiliki row scope company-wide pada menu Data Karyawan. Perbedaan akses hanya ditentukan oleh field visibility, izin mutation, akses master Jabatan & Departemen, serta account management.
 
-No.
+5.1 Atribut Umum
 
-Atribut
+Ditampilkan kepada Super Admin, Admin, dan User:
 
-Catatan
+- nama
+- jenis_kelamin
+- agama
+- tanggal_lahir
+- tempat_lahir
+- pendidikan
+- jabatan
+- departemen
+- status_kerja
+- status_keaktifan
+- tanggal_masuk
+- tanggal_keluar
 
-1
+5.2 Atribut Sensitif
 
-nama
+Hanya boleh diterima dan dilihat oleh Super Admin:
 
-Wajib
+- nik
+- alamat
+- status_perkawinan
+- no_hp
+- foto_ktp
 
-2
-
-nik
-
-Wajib dan unik
-
-3
-
-tanggal_lahir
-
-Wajib
-
-4
-
-tempat_lahir
-
-Wajib
-
-5
-
-jenis_kelamin
-
-L / P
-
-6
-
-alamat
-
-Data pribadi
-
-7
-
-agama
-
-ENUM sesuai daftar yang disepakati
-
-8
-
-status_perkawinan
-
-Data pribadi
-
-9
-
-pendidikan
-
-ENUM sesuai daftar yang disepakati
-
-10
-
-jabatan
-
-Diambil dari tabel jabatan
-
-11
-
-departemen
-
-Diambil dari tabel departemen; boleh kosong
-
-12
-
-status_keaktifan
-
-aktif / nonaktif
-
-13
-
-status_kerja
-
-Sesuai pilihan yang disepakati
-
-14
-
-tanggal_masuk
-
-Wajib
-
-15
-
-tanggal_keluar
-
-Boleh kosong
-
-16
-
-no_hp
-
-Data pribadi
-
-17
-
-foto_ktp
-
-Path file; boleh kosong
+Admin dan User tidak boleh menerima key, path, maupun URL atribut sensitif dalam payload frontend. Super Admin tetap mengelola data lengkap melalui Tambah, Detail, dan Edit Karyawan.
 
 6. Fitur Tambah Karyawan
 
@@ -470,71 +391,9 @@ Departemen yang masih digunakan oleh karyawan tidak boleh dihapus tanpa penangan
 
 11. Tampilan Data Karyawan - Admin dan User
 
-Admin dan User memiliki hak yang sama pada menu Data Karyawan: hanya melihat daftar karyawan tanpa aksi tambah, edit, hapus, atau akses master Jabatan & Departemen.
+Admin dan User hanya memiliki akses baca, tetapi keduanya dapat melihat seluruh karyawan dari seluruh departemen.
 
-Atribut yang Ditampilkan
-
-Keterangan
-
-nama
-
-Ditampilkan
-
-jenis_kelamin
-
-Ditampilkan
-
-agama
-
-Ditampilkan
-
-tanggal_lahir
-
-Ditampilkan
-
-tempat_lahir
-
-Ditampilkan
-
-pendidikan
-
-Ditampilkan
-
-jabatan
-
-Ditampilkan
-
-departemen
-
-Ditampilkan; dapat kosong
-
-status_kerja
-
-Ditampilkan
-
-status_keaktifan
-
-Ditampilkan
-
-tanggal_masuk
-
-Ditampilkan
-
-tanggal_keluar
-
-Ditampilkan; dapat kosong
-
-Atribut berikut tidak ditampilkan kepada Admin dan User:
-
-nik
-
-alamat
-
-status_perkawinan
-
-no_hp
-
-foto_ktp
+List dan Detail menampilkan 12 atribut umum pada bagian 5.1. Atribut sensitif pada bagian 5.2 tidak boleh diserialisasi ke Inertia props Admin/User. Admin dan User tidak memperoleh aksi tambah, edit, hapus, account management, Foto KTP, atau akses master Jabatan & Departemen.
 
 12. Pembuatan dan Pengelolaan Akun Karyawan
 
@@ -598,7 +457,7 @@ updated_at
 
 Timestamp
 
-13. Aturan Role Saat Pembuatan Akun
+13. Aturan Role Akun Berdasarkan Jabatan
 
 Jabatan
 
@@ -635,6 +494,15 @@ user
 Facility (FLT)
 
 user
+
+Jabatan Karyawan merupakan sumber authoritative untuk `users.role_id`. Mapping ini digunakan oleh backend pada dua jalur yang sama:
+
+1. saat Super Admin membuat akun Karyawan;
+2. saat Super Admin mengubah Jabatan Karyawan yang sudah memiliki akun.
+
+Perubahan Jabatan harus menyimpan data Karyawan dan menyinkronkan `users.role_id` dalam satu transaksi. Perubahan tersebut tidak boleh mengubah `username`, PIN/hash, `is_active`, atau `must_change_pin`. Jika Karyawan belum memiliki akun, perubahan Jabatan tidak membuat akun otomatis; mapping terbaru baru digunakan ketika akun dibuat kemudian.
+
+Jabatan tanpa mapping tidak boleh diberi fallback role. Jika Karyawan sudah memiliki akun, perubahan ke Jabatan tanpa mapping ditolak agar Jabatan dan role akun tidak menjadi tidak konsisten.
 
 14. Tabel Database yang Digunakan
 
@@ -706,7 +574,42 @@ Konfirmasi PIN harus sama dengan PIN yang dimasukkan.
 
 File foto KTP harus divalidasi sebagai file gambar dengan batas ukuran yang akan ditentukan pada implementasi.
 
-17. Acceptance Criteria
+17. Export Data Karyawan ke Excel
+
+Super Admin dapat mengekspor Data Karyawan company-wide ke workbook Excel `.xlsx` berdasarkan pilihan `status_keaktifan` yang wajib dipilih: `aktif` atau `nonaktif`.
+
+Status export hanya bersumber dari `karyawan.status_keaktifan`. Export tidak mengikuti search, filter Departemen, Jabatan, Status Kerja, atau filter list Data Karyawan yang sedang aktif.
+
+Nama file:
+
+- `data-karyawan-aktif.xlsx`;
+- `data-karyawan-nonaktif.xlsx`.
+
+Kolom final:
+
+- No;
+- Nama;
+- NIK;
+- Jenis Kelamin;
+- Agama;
+- Tempat Lahir;
+- Tanggal Lahir;
+- Alamat;
+- Status Perkawinan;
+- Pendidikan;
+- Jabatan;
+- Departemen;
+- Status Kerja;
+- Status Keaktifan;
+- Tanggal Masuk;
+- Tanggal Keluar;
+- No. HP.
+
+Data diurutkan `nama ASC`, lalu `id ASC`. Relasi Jabatan dan Departemen ditampilkan sebagai nama, bukan foreign key. Departemen dan Tanggal Keluar yang kosong ditampilkan `-`.
+
+Foto KTP, path/URL Foto KTP, PIN, hash PIN, dan field autentikasi lain tidak boleh masuk export. Admin dan User tidak memiliki tombol maupun akses endpoint export; direct URL ditolak HTTP 403. Jika hasil pilihan status kosong, sistem menampilkan pesan dan tidak mengirim workbook kosong.
+
+18. Acceptance Criteria
 
 Super Admin dapat melihat seluruh atribut karyawan.
 
@@ -728,7 +631,13 @@ PIN akun baru disimpan sebagai hash dan pengguna diwajibkan mengganti PIN sement
 
 Karyawan dengan departemen kosong dan tanggal keluar kosong dapat disimpan dengan valid.
 
-18. Out of Scope / Belum Dikunci
+Super Admin dapat export seluruh Karyawan Aktif atau Nonaktif ke Excel company-wide.
+
+Admin/User tidak dapat export Data Karyawan.
+
+Foto KTP dan data autentikasi tidak terdapat pada workbook Employee.
+
+19. Out of Scope / Belum Dikunci
 
 Riwayat jabatan belum digunakan pada fase ini.
 

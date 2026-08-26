@@ -1,7 +1,7 @@
 # PERMISSIONS — Kelola Karyawan
 
 **Status:** READY FOR IMPLEMENTATION
-**Last Updated:** 2026-08-17 — disinkronkan dengan PRD akun karyawan terbaru
+**Last Updated:** 2026-08-22 — sinkronisasi authoritative Jabatan → role akun
 
 Legenda:
 - ✅ ALLOW
@@ -27,33 +27,17 @@ Legenda:
 
 | Role | Scope |
 |---|---|
-| Super Admin | Semua karyawan |
-| Admin | Karyawan dengan `departemen_id` yang sama dengan Admin |
-| User | Hanya karyawan yang terhubung ke akun dirinya |
+| Super Admin | Seluruh karyawan dari seluruh departemen (company-wide) |
+| Admin | Seluruh karyawan dari seluruh departemen (company-wide) |
+| User | Seluruh karyawan dari seluruh departemen (company-wide) |
 
-Jika Admin tidak memiliki `departemen_id`, result set Employee = kosong. Tidak ada fallback company-wide.
+Perbedaan ketiga role pada modul ini berasal dari field visibility, action permission, akses master Jabatan & Departemen, serta account management; bukan dari row scope.
 
 ---
 
 # 3. Field Visibility
 
-## Sensitif
-Hanya Super Admin:
-- NIK
-- Alamat
-- Status Perkawinan
-- No. HP
-- Foto KTP/path
-
-| Field | Super Admin | Admin | User |
-|---|---|---|---|
-| NIK | ✅ | ❌ | ❌ |
-| Alamat | ✅ | ❌ | ❌ |
-| Status Perkawinan | ✅ | ❌ | ❌ |
-| No. HP | ✅ | ❌ | ❌ |
-| Foto KTP | ✅ | ❌ | ❌ |
-
-## Umum
+## A. Common Employee Fields
 
 | Field | Super Admin | Admin | User |
 |---|---|---|---|
@@ -70,15 +54,27 @@ Hanya Super Admin:
 | Tanggal Masuk | ✅ | ✅ | ✅ |
 | Tanggal Keluar | ✅ | ✅ | ✅ |
 
+## B. Sensitive Employee Fields
+
+| Field | Super Admin | Admin | User |
+|---|---|---|---|
+| NIK | ✅ | ❌ | ❌ |
+| Alamat | ✅ | ❌ | ❌ |
+| Status Perkawinan | ✅ | ❌ | ❌ |
+| No. HP | ✅ | ❌ | ❌ |
+| Foto KTP/path/URL | ✅ | ❌ | ❌ |
+
+Backend wajib menghilangkan seluruh key sensitif dari Inertia props Admin/User; menyembunyikannya hanya melalui kondisi Vue tidak memenuhi permission ini. Super Admin tetap menerima data lengkap pada Detail, Tambah, dan Edit Karyawan.
+
 ---
 
 # 4. Actions
 
 | Action | Super Admin | Admin | User |
 |---|---|---|---|
-| View list | ✅ | ✅ scoped | ✅ self-only |
-| Search/filter | ✅ | ✅ scoped | ❌ |
-| View detail | ✅ | ✅ scoped | ✅ self-only |
+| View list | ✅ company-wide | ✅ company-wide | ✅ company-wide |
+| Search/filter | ✅ | ✅ | ✅ |
+| View detail | ✅ company-wide | ✅ company-wide | ✅ company-wide |
 | Create | ✅ | ❌ | ❌ |
 | Edit | ✅ | ❌ | ❌ |
 | View Foto KTP | ✅ | ❌ | ❌ |
@@ -90,6 +86,18 @@ Hanya Super Admin:
 | Create Account | ✅ | ❌ | ❌ |
 | View Account Status | ✅ | ❌ | ❌ |
 | Activate/Deactivate Account | ✅ dengan rule status Karyawan | ❌ | ❌ |
+| Export Data Karyawan Excel | ✅ company-wide, pilih Aktif/Nonaktif | ❌ | ❌ |
+
+---
+
+## 4.1 Export Data Karyawan
+
+- hanya Super Admin;
+- endpoint dilindungi backend, bukan hanya disembunyikan di Vue;
+- pilihan status wajib `aktif` atau `nonaktif` dan bersumber dari `karyawan.status_keaktifan`;
+- export selalu company-wide serta tidak mengikuti filter list Data Karyawan;
+- Foto KTP, path/URL Foto KTP, PIN, hash, dan field akun lain tidak diexport;
+- Admin/User direct URL menerima HTTP 403.
 
 ---
 
@@ -149,6 +157,9 @@ Aturan authoritative:
 6. akun Karyawan nonaktif tidak boleh diaktifkan;
 7. aktivasi kembali master Karyawan tidak otomatis mengaktifkan akun;
 8. ketika Karyawan dinonaktifkan atau diproses keluar, akun existing ikut dinonaktifkan.
+9. perubahan Jabatan Karyawan yang memiliki akun otomatis menyinkronkan `users.role_id` memakai mapping yang sama dengan Create Account;
+10. sinkronisasi role hanya mengubah `role_id`; `username`, PIN/hash, `is_active`, dan `must_change_pin` tetap;
+11. perubahan Jabatan Karyawan tanpa akun tidak membuat akun otomatis.
 
 ## 7.1 Role Mapping
 
@@ -159,6 +170,8 @@ Aturan authoritative:
 | Mitra, Operasional/OPS, Facility/FLT | `user` |
 
 Pencocokan tidak case-sensitive dan menggunakan token/kategori Jabatan yang dinormalisasi. Jabatan lain tidak memperoleh fallback.
+
+Role authorization selalu dibaca dari relasi database pada request terbaru. Setelah Jabatan dan role akun disinkronkan, request berikutnya langsung menggunakan hak akses role terbaru tanpa menyimpan salinan role di session.
 
 ## 7.2 Forced First PIN Change
 

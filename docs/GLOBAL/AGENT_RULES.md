@@ -351,15 +351,12 @@ Agent hanya boleh mengerjakan workstream yang sedang aktif dan memiliki requirem
 Saat ini:
 
 - Landing Page / Company Profile aktif tetapi belum selesai;
-- Dashboard Internal aktif terbatas untuk Data Absensi dan persiapan Kelola Karyawan;
-- KPI dan Closing Event belum aktif.
+- Dashboard Internal aktif untuk modul yang memiliki dokumentasi final, termasuk Data Absensi, Kelola Karyawan, dan Closing Event;
+- KPI belum aktif; Closing Event aktif hanya sesuai dokumen final `docs/DASHBOARD/CLOSING-EVENT/`.
 
-Jangan memperluas Dashboard ke KPI, Closing Event, atau permission granular yang belum diputuskan.
+Jangan memperluas Dashboard ke KPI atau permission granular yang belum diputuskan. Closing Event hanya boleh mengikuti PRD/PERMISSIONS final modulnya.
 
-Fase berikutnya:
-
-- Sistem KPI Karyawan;
-- Sistem Closing Event Marketing.
+Fase berikutnya yang belum aktif adalah Sistem KPI Karyawan.
 
 Fondasi yang sudah tersedia di proyek boleh dipertahankan. Keberadaan source tidak otomatis menjadikannya requirement bisnis final; mismatch harus didokumentasikan.
 

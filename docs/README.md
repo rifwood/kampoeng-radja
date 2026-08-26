@@ -32,14 +32,20 @@ docs/
 │   └── AGENT_RULES.md
 ├── LANDING-PAGE/
 │   └── dokumentasi Figma-first untuk website publik dan CMS Fase 1
-└── DASHBOARD/
+    └── DASHBOARD/
     ├── README.md
     ├── ATTENDANCE/
     │   ├── PRD.md
     │   ├── UI_SPEC.md
     │   ├── PERMISSIONS.md
     │   └── references/README.md
-    └── EMPLOYEE/
+    ├── EMPLOYEE/
+        ├── README.md
+        ├── PRD.md
+        ├── PERMISSIONS.md
+        ├── UI_SPEC.md
+        └── references/
+    └── CLOSING-EVENT/
         ├── README.md
         ├── PRD.md
         ├── PERMISSIONS.md
@@ -47,7 +53,7 @@ docs/
         └── references/
 ```
 
-KPI dan Closing Event belum memiliki folder modul karena belum ada requirement aktif yang cukup. Jangan membuat kumpulan file kosong untuk modul tersebut.
+Closing Event sudah memiliki requirement final dan implementasi aktif. KPI tetap belum aktif; jangan membuat kumpulan file kosong untuk KPI.
 
 ## Urutan Baca — Semua Task
 
@@ -98,7 +104,7 @@ Dashboard tidak otomatis memakai workflow Figma-first. Jika handoff visual berup
 | Data Absensi | `DASHBOARD/ATTENDANCE/PRD.md` | Screenshot approved yang disimpan di `references/` | `LOG.md` |
 | Kelola Karyawan | `DASHBOARD/EMPLOYEE/PRD.md` | `DASHBOARD/EMPLOYEE/references/*.png` untuk list/master; UI turunan terdokumentasi di `UI_SPEC.md` | `LOG.md` |
 | KPI | Belum aktif | Belum tersedia | `LOG.md` |
-| Closing Event | Belum aktif | Belum tersedia | `LOG.md` |
+| Closing Event | `DASHBOARD/CLOSING-EVENT/PRD.md` | Screenshot rough reference pada `references/` | `LOG.md` |
 
 ## Status Informasi
 

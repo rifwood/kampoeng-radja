@@ -135,7 +135,7 @@ Daftar section aktual harus mengikuti PRD dan Figma approved.
 | Sejarah / Kisah | Narasi kronologis, milestone | `[PERLU KONTEN RESMI]` | `[PERLU KONTEN RESMI]` | Fakta perusahaan |
 | Visi | Pernyataan visi | `[PERLU KONTEN RESMI]` | `[PERLU KONTEN RESMI]` | |
 | Misi | Daftar misi | `[PERLU KONTEN RESMI]` | `[PERLU KONTEN RESMI]` | |
-| Struktur Organisasi | Nama/jabatan/foto jika dipublikasikan | `[PERLU KONTEN RESMI]` | `[PERLU KONTEN RESMI]` | Perlu approval publikasi |
+| Struktur Organisasi | Asset struktur organisasi lengkap | Asset stakeholder `public/assets/about/struktur-organisasi-kampoeng-radja.png` | `[PRODUKSI RESMI]` | Ditampilkan sebagai satu gambar; tidak disusun ulang menjadi card atau data terpisah |
 
 ---
 

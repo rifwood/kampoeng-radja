@@ -1,7 +1,7 @@
 # UI_SPEC — Kelola Karyawan
 
 **Status:** READY FOR IMPLEMENTATION
-**Last Updated:** 2026-08-17 — disinkronkan dengan PRD akun karyawan terbaru
+**Last Updated:** 2026-08-22 — sinkronisasi authoritative Jabatan → role akun
 
 Visual references:
 - `references/data_karyawan.png`
@@ -37,36 +37,48 @@ Active navigation:
 
 Visual utama mengikuti `data_karyawan.png`.
 
+## Semua Role
+
+List/read-only view menampilkan 12 atribut umum:
+
+- Nama
+- Jenis Kelamin
+- Agama
+- Tanggal Lahir
+- Tempat Lahir
+- Pendidikan
+- Jabatan
+- Departemen
+- Status Kerja
+- Status Keaktifan
+- Tanggal Masuk
+- Tanggal Keluar
+
+Jika seluruh kolom tidak muat, tabel menggunakan horizontal scroll yang disengaja dan tetap dapat dioperasikan pada desktop, tablet, dan mobile.
+
 ## Super Admin
-Tampilkan:
+
+Tambahan UI:
 - heading + deskripsi;
 - tombol `Tambah Karyawan`;
 - search/filter sesuai PRD;
 - tabel;
 - pagination;
 - action Detail/Edit/Delete-or-Deactivate sesuai rule.
-
-Prioritaskan kolom:
-- Nama
-- NIK
-- Jabatan
-- Departemen
-- Status Kerja
-- Status Keaktifan
-- Aksi
-
-Tabel tidak perlu memuat seluruh 17 field.
+- NIK boleh dipertahankan sebagai kolom tambahan; field sensitif lain tersedia pada Detail/Edit/Create, bukan wajib di tabel list.
 
 ## Admin
 - read-only;
-- department-scope;
+- company-wide;
 - tidak ada tombol mutation;
+- seluruh 12 atribut umum terlihat;
 - NIK dan field sensitif tidak ada pada payload/tabel.
 
 ## User
-- self-only;
-- tidak perlu list multi-row/search/filter;
-- halaman dapat menampilkan record dirinya dengan style Employee yang sama.
+- read-only dan company-wide;
+- dapat menggunakan list multi-row/search/filter;
+- seluruh 12 atribut umum terlihat pada setiap record;
+- tidak menerima field sensitif.
 
 ---
 
@@ -89,10 +101,21 @@ Search:
 
 Filter:
 - Jabatan
+- Departemen
 - Status Keaktifan
 - Status Kerja
 
-Departemen locked ke scope user.
+## User
+Search:
+- Nama
+
+Filter:
+- Jabatan
+- Departemen
+- Status Keaktifan
+- Status Kerja
+
+Admin/User tidak dapat mencari berdasarkan NIK karena NIK merupakan field sensitif.
 
 ## Pagination
 - server-side;
@@ -184,11 +207,11 @@ Super Admin:
 - mengaktifkan/nonaktifkan akun sesuai status Karyawan.
 
 Admin:
-- field non-sensitif scoped;
+- 12 field umum dengan company-wide row scope;
 - tanpa mutation.
 
 User:
-- field non-sensitif self-only;
+- 12 field umum dengan company-wide row scope;
 - tanpa mutation.
 
 Admin/User tidak menerima account-management payload atau action.
@@ -228,6 +251,8 @@ Action minimum:
 - Aktifkan Akun untuk akun nonaktif hanya bila Karyawan aktif.
 
 Jika Karyawan nonaktif, tombol Aktivasi disabled dan UI menjelaskan bahwa master Karyawan harus aktif. Tidak ada action lihat PIN, lihat hash, atau delete akun.
+
+Role yang ditampilkan pada section Akun Sistem harus berasal dari relasi akun terbaru. Setelah Super Admin mengubah Jabatan Karyawan, redirect kembali ke Detail menampilkan role hasil sinkronisasi tanpa input role tambahan dari browser. Karyawan tanpa akun tetap menampilkan mapping Jabatan sebagai calon role dan tidak dibuatkan akun otomatis.
 
 ---
 
@@ -356,7 +381,30 @@ Mobile:
 
 ---
 
-# 12. Visual QA
+# 12. Export Data Karyawan
+
+Pada header Data Karyawan Super Admin, tampilkan tombol `Export Data` tanpa mengganggu `Tambah Karyawan`.
+
+Klik tombol membuka modal compact:
+
+```text
+Export Data Karyawan
+
+Status Keaktifan *
+[ Aktif ▼ ]
+
+[Batal] [Export Excel]
+```
+
+Pilihan hanya `Aktif` dan `Nonaktif`. Modal menjelaskan bahwa search/filter halaman tidak memengaruhi isi export. Admin/User tidak menerima tombol atau modal export.
+
+Workbook `.xlsx` memakai satu sheet dengan header bold, warna header ringan, border tipis, freeze header, filter kolom, lebar kolom yang memadai, dan wrapping untuk Alamat. Jika hasil status kosong, tampilkan flash error tanpa mengunduh workbook kosong.
+
+Desktop: tombol berada satu grup dengan Tambah Karyawan. Mobile: kedua tombol boleh wrap/stack dan modal tetap berada di dalam viewport.
+
+---
+
+# 13. Visual QA
 
 Agent wajib membandingkan halaman aktual dengan:
 - `data_karyawan.png`
@@ -369,7 +417,7 @@ Untuk Tambah/Edit/Detail:
 
 ---
 
-# 13. Post-Implementation
+# 14. Post-Implementation
 
 Wajib:
 - authorization tests;
@@ -384,9 +432,10 @@ Wajib:
 
 ---
 
-# 14. Route Behavior Akun
+# 15. Route Behavior Akun
 
 - create/manage account hanya melalui route Employee yang dilindungi `auth + active + super_admin`;
 - halaman dan submit Ganti PIN memerlukan `auth + active` tetapi dikecualikan dari forced-PIN redirect;
 - logout selalu tersedia bagi authenticated user;
 - route internal lain tidak boleh dapat dibypass selama `must_change_pin = true`.
+- update Karyawan dan sinkronisasi role akun berlangsung atomik; request internal berikutnya membaca role terbaru dari database.

@@ -105,11 +105,25 @@ class LandingPageTest extends TestCase
             'galeri_event_id' => $event->id,
             'created_by' => $user->id,
             'foto' => '/event.jpg',
+            'caption' => 'Foto urutan kedua',
+            'urutan' => 2,
+        ]);
+        GaleriEventFoto::create([
+            'galeri_event_id' => $event->id,
+            'created_by' => $user->id,
+            'foto' => '/event-featured.jpg',
+            'caption' => 'Foto utama',
+            'urutan' => 1,
         ]);
 
         $this->get('/galeri-event')->assertInertia(fn (Assert $page) => $page
             ->component('GaleriEvent')
             ->has('events', 1)
-            ->has('events.0.photos', 1));
+            ->has('events.0.photos', 2)
+            ->where('events.0.photos.0.url', url('/storage/event-featured.jpg'))
+            ->where('events.0.photos.0.caption', 'Foto utama')
+            ->where('events.0.photos.0.urutan', 1)
+            ->where('events.0.photos.1.url', url('/storage/event.jpg'))
+            ->missing('events.0.photos.0.photo_path'));
     }
 }

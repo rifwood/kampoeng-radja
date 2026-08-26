@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\AttendanceAccess;
+use App\Support\ClosingEventAccess;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -29,10 +31,23 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $closingEventPermissions = app(ClosingEventAccess::class)->for($request->user());
+        $attendancePermissions = app(AttendanceAccess::class)->for($request->user());
+        $cmsCanManage = in_array(
+            $request->user()?->role()->value('nama_role'),
+            ['admin', 'super_admin'],
+            true,
+        );
+
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                'closingEvent' => $closingEventPermissions,
+                'attendance' => $attendancePermissions,
+                'cms' => [
+                    'canManage' => $cmsCanManage,
+                ],
             ],
             'flash' => [
                 'success' => fn (): ?string => $request->session()->get('success'),

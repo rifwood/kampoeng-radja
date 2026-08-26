@@ -1,34 +1,80 @@
-# Permissions — Data Absensi
+# PERMISSIONS — Absensi
 
-Terakhir direbaseline: **15 Agustus 2026**
+**Status:** FINAL
+**Last Updated:** 2026-08-20
 
-| Role | Page Access | Data Scope | View | Create/Update Hari Ini | Tanggal Lampau | Requirement | Implementation |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `super_admin` | Allowed | Seluruh karyawan aktif | Allowed | Allowed | Read-only | Confirmed untuk tahap ini | Implemented dan diuji |
-| `admin` | `TBD` | `TBD — menunggu keputusan tim` | `TBD` | `TBD` | `TBD` | Belum diputuskan | Denied (403) |
-| `user` | `TBD` | `TBD — menunggu keputusan tim` | `TBD` | `TBD` | `TBD` | Belum diputuskan | Denied (403) |
-| Guest | Denied | None | Denied | Denied | Denied | Confirmed | Redirect login |
+## Capability
 
-## Special Conditions
+```text
+canViewAttendance
+canManageAttendance
+canExportAttendance
+```
 
-- Akun wajib aktif.
-- Mutation hanya hari berjalan.
-- Authorization backend wajib tetap ada.
-- Role/jabatan/departemen tidak boleh dipakai sebagai scope tambahan sebelum matrix disetujui.
+## Matrix
 
-## Implementation Evidence
+| Fitur | Super Admin | Admin | User |
+|---|:---:|:---:|:---:|
+| View company-wide | ALLOW | ALLOW | ALLOW |
+| Input H/I/A | ALLOW | DENY | DENY |
+| Input Jam Masuk/Keluar | ALLOW | DENY | DENY |
+| Input Keterangan | ALLOW | DENY | DENY |
+| Simpan | ALLOW | DENY | DENY |
+| Input/edit hari berjalan | ALLOW | DENY | DENY |
+| Input/edit satu hari kalender sebelumnya | ALLOW | DENY | DENY |
+| Input/edit sebelum kemarin | DENY | DENY | DENY |
+| Delete | DENY | DENY | DENY |
+| Export Excel bulanan multi-sheet | ALLOW | DENY | DENY |
 
-- Route: `routes/web.php`
-- Middleware: `app/Http/Middleware/EnsureUserIsSuperAdmin.php`
-- Form Request: `app/Http/Requests/Admin/SaveAbsensiRequest.php`
-- Tests: `tests/Feature/Admin/AbsensiTest.php`
+## Navigation
 
-## Team Decisions Required
+Super Admin: `Kelola Absensi`.
 
-1. Apakah Admin boleh melihat Absensi.
-2. Jika boleh, apakah scope seluruh data, departemen sendiri, bawahan, atau lainnya.
-3. Apakah Admin boleh create/update atau read-only.
-4. Apakah User boleh melihat data diri sendiri.
-5. Apakah jabatan tertentu mengubah hak akses.
+Admin/User: `Data Absensi`.
 
-Sampai keputusan dibuat, 403 untuk Admin/User dipertahankan sebagai safe implementation, tetapi bukan permission truth permanen.
+Admin/User menu Absensi harus tampil.
+
+## Scope Data
+
+Semua role melihat daftar absensi company-wide.
+
+## Mutation
+
+Hanya Super Admin. Backend wajib menolak Admin/User pada store/update dan
+mutation lain. Super Admin hanya dapat mutation pada hari berjalan dan satu hari
+kalender sebelumnya. Future dan tanggal sebelum kemarin ditolak. Window dihitung
+dengan tanggal kalender `Asia/Jakarta`, bukan rolling 24 jam.
+
+## Jam
+
+- manual oleh Super Admin;
+- nullable;
+- Admin/User read-only;
+- I/A membuat `jam_masuk` dan `jam_keluar` menjadi NULL;
+- jika keduanya ada, `jam_keluar >= jam_masuk`.
+- jam masuk maksimal `12:00`;
+- Terlambat dihitung hanya untuk H dengan jam masuk `> 08:30`;
+- Pulang Awal dihitung hanya untuk H dengan jam keluar `< 16:30`;
+- jam NULL tidak menghasilkan status turunan.
+
+## Excel Bulanan
+
+Hanya Super Admin. Admin/User yang membuka URL export secara langsung menerima
+HTTP 403.
+
+Filter memakai `tanggal_absensi`, bukan `created_at` atau `updated_at`. Satu
+bulan menghasilkan satu workbook `.xlsx`. Sheet pertama adalah `Rekap Bulanan`,
+kemudian setiap tanggal kalender pada bulan tersebut menghasilkan satu sheet,
+termasuk tanggal tanpa record. Isi export bersifat company-wide.
+
+## Test Minimum
+
+- Super Admin View/Manage/Export.
+- Admin View, mutation/export forbidden.
+- User View, mutation/export forbidden.
+- I/A clears times.
+- Hadir supports nullable `jam_keluar`.
+- invalid time order rejected.
+- yesterday create/update allowed.
+- mutation before yesterday rejected.
+- future mutation rejected.

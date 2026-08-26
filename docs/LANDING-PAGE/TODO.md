@@ -466,15 +466,12 @@ Scope PRD saat ini mencakup admin content minimum.
 Status:
 
 ```text
-[PERLU KLARIFIKASI]
+[PRODUKSI RESMI — STATIC ASSET]
 ```
 
-Tentukan:
-
-- [ ] Statis di frontend/content file
-- [ ] Dinamis dari database/admin
-
-Jangan membuat CMS khusus sebelum keputusan final.
+- [x] Struktur organisasi ditampilkan sebagai satu asset resmi dari stakeholder.
+- [x] Path: `public/assets/about/struktur-organisasi-kampoeng-radja.png`.
+- [x] Tidak memerlukan CMS atau penyusunan ulang data organisasi pada fase ini.
 
 ---
 

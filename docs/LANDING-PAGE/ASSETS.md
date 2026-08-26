@@ -578,3 +578,11 @@ Menggunakan layout yang benar dengan gambar, icon, crop, atau dekorasi yang berb
 Karena itu:
 
 > **ambil dari Figma jika tersedia, dokumentasikan sumbernya, gunakan sebagai sementara, dan ganti hanya setelah asset produksi tervalidasi.**
+
+---
+
+# 32. Asset Produksi Struktur Organisasi
+
+| Asset | Path Project | Sumber | Status | Penggunaan |
+|---|---|---|---|---|
+| Struktur Organisasi PT Anjungan Buana Wisata | `public/assets/about/struktur-organisasi-kampoeng-radja.png` | Asset stakeholder, 24 Agustus 2026 | `[PRODUKSI RESMI]` | Satu-satunya konten visual section Struktur Organisasi pada halaman Tentang Kami |

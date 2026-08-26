@@ -1,116 +1,71 @@
 # PRD — Dashboard Home
 
-Status: **Approved for Implementation — 16 Agustus 2026**
-Progress source: `LOG.md`
+Status: **Approved — revisi 23 Agustus 2026**
 
-## Tujuan
+## Tujuan dan Entry Point
 
-Dashboard Home adalah halaman pertama setelah login bagi seluruh akun aktif. Satu halaman digunakan bersama, tetapi data dan widget mengikuti role/data scope.
+Dashboard Home merangkum kondisi operasional/manajerial Kampoeng Radja dari data Karyawan, Absensi, dan Closing Event.
 
-## Entry Point
+- `/dashboard` adalah entry point canonical seluruh akun aktif.
+- `/admin` redirect ke `/dashboard`.
+- Nama dan jabatan greeting berasal dari relasi Karyawan authenticated user; role hanya untuk authorization.
 
-- Login berhasil mengarah ke `/dashboard`.
-- `/dashboard` adalah canonical Dashboard Home untuk `super_admin`, `admin`, dan `user` yang aktif.
-- `/admin` mengarah ke `/dashboard` untuk backward compatibility.
-- Route management `/admin/*` tetap dipertahankan dengan middleware existing.
+## Ringkasan Organisasi
 
-## Identitas Pengguna
+Ringkasan organisasi tersedia bagi Super Admin dan Admin menggunakan scope company-wide:
 
-- Nama berasal dari `user.karyawan.nama`.
-- Jabatan berasal dari `user.karyawan.jabatan.nama_jabatan`.
-- Role berasal dari `user.role.nama_role` dan hanya digunakan untuk authorization/view context.
-- Role tidak boleh digunakan sebagai pengganti jabatan.
+1. **Karyawan Aktif**: `status_keaktifan = aktif`.
+2. **Hadir Hari Ini**: Absensi hari ini berstatus `H`.
+3. **Terlambat Hari Ini**: `H`, `jam_masuk` terisi, dan lebih dari `08:30`.
+4. **Izin / Alfa Hari Ini**: jumlah `I + A`.
 
-## Scope per Role
+Persentase memakai seluruh Karyawan aktif sebagai denominator. Denominator nol menghasilkan `0%`.
 
-### Super Admin
+Ringkasan Absensi memakai lima metric: Hadir, Izin, Alfa, Terlambat, dan Pulang Awal. Pulang Awal adalah `H` dengan `jam_keluar` terisi dan lebih awal dari `16:30`.
 
-- Scope statistik: seluruh karyawan.
-- Denominator kehadiran: seluruh karyawan aktif.
-- Dapat melihat empat summary card, persentase H/I/A, kalender, dan karyawan terbaru.
-- Dapat melihat shortcut Absensi karena route tersebut diizinkan.
+User tidak menerima aggregate organisasi. User hanya menerima status Absensi dirinya sendiri hari ini.
 
-### Admin
+## Pendapatan Harian
 
-- Scope statistik: karyawan dengan `departemen_id` sama dengan karyawan authenticated Admin.
-- Denominator kehadiran: karyawan aktif pada departemen tersebut.
-- Tidak boleh fallback ke scope seluruh perusahaan bila Admin tidak memiliki departemen.
-- Dapat melihat summary/persentase/karyawan terbaru hanya dalam scope departemen.
-- Shortcut Absensi tidak ditampilkan selama route Absensi masih menolak Admin.
+Grafik hanya tersedia bagi actor yang memiliki capability View Closing Event.
 
-### User
+- Periode dipilih menggunakan bulan dan tahun; default periode berjalan.
+- Sumber nilai: `closing_event.harga_total`.
+- Pengelompokan: `closing_event.tanggal` (Tanggal Mulai), bukan `created_at`.
+- Setiap tanggal kalender bulan terpilih selalu ada; hari tanpa event bernilai `0`.
+- Beberapa event pada tanggal mulai yang sama dijumlahkan.
+- Event multi-hari tetap dihitung sekali pada Tanggal Mulai. Harga tidak dibagi atau diduplikasi sepanjang durasi.
 
-- Scope hanya karyawan authenticated user.
-- Tidak menerima statistik organisasi atau departemen.
-- Tidak menerima daftar karyawan terbaru.
-- Dapat menerima identitas, jabatan, status kehadiran sendiri hari ini, dan kalender umum.
-- Tidak menerima shortcut management.
+Ringkasan grafik:
 
-## Summary Data
+- Total Bulan Ini
+- Hari Tertinggi beserta nilai
+- Jumlah Hari Tanpa Transaksi
 
-Untuk Super Admin/Admin:
+## Ringkasan Closing Event
 
-- Total Karyawan: seluruh record karyawan dalam scope.
-- Karyawan Aktif: record dalam scope dengan `status_keaktifan = aktif`.
-- Hadir Hari Ini: record Absensi hari berjalan berstatus `H` untuk karyawan aktif dalam scope.
-- Izin / Alpha: jumlah status `I` + `A` hari berjalan untuk karyawan aktif dalam scope.
+Panel ini hanya dikirim kepada actor yang memiliki capability View Closing Event.
 
-Untuk User, tampilkan status absensi dirinya sendiri dan jangan kirim summary organisasi/departemen.
+- Event Aktif Bulan Ini: `status_event = aktif` dan rentang pelaksanaannya overlap bulan berjalan, satu event dihitung sekali.
+- Berlangsung Hari Ini: `status_event = aktif` dan `tanggal <= today <= tanggal_selesai ?? tanggal`.
+- Dibatalkan: `status_event = dibatalkan` dan rentang pelaksanaannya overlap bulan berjalan; periode memakai tanggal event, bukan `cancelled_at`.
+- Total Pengunjung Aktif: jumlah pengunjung event aktif yang overlap bulan berjalan, satu event dihitung sekali.
 
-## Persentase Kehadiran
+Status `dibatalkan` hanya muncul sebagai jumlah pada panel ini dan tetap dikecualikan dari chart nilai serta total pengunjung aktif.
 
-Denominator adalah seluruh karyawan aktif dalam scope pengguna.
+## Akses Cepat
 
-```text
-H% = H / active employees in scope × 100
-I% = I / active employees in scope × 100
-A% = A / active employees in scope × 100
-```
+Shortcut dibentuk dari capability backend dan tidak boleh mengarah ke route 403:
 
-Jika denominator `0`, ketiga persentase bernilai `0`.
+- Data Karyawan: actor dengan page access Karyawan.
+- Kelola Absensi/Data Absensi: label mengikuti capability manage/view.
+- Closing Event: hanya actor dengan View Closing Event.
+- Master Data Event: hanya actor dengan Manage Master Closing Event.
 
-Karyawan aktif tanpa record Absensi hari ini tetap masuk denominator tetapi tidak masuk H/I/A.
+## Data dan Performance
 
-## Karyawan Terbaru
-
-- Hanya untuk Super Admin dan Admin.
-- Query dibatasi sesuai kapasitas widget.
-- Urutan: `tanggal_masuk DESC, id DESC`.
-- Admin tetap memakai scope departemen.
-- Tampilkan nama, jabatan, dan fallback inisial.
-- `foto_ktp` tidak boleh digunakan sebagai avatar.
-- Tidak ada menu Edit/Delete/Detail karena Employee CRUD belum tersedia.
-
-## Kalender Kerja
-
-- Hanya menampilkan kalender bulan berjalan.
-- Tanggal hari ini diberi highlight.
-- Tidak menampilkan shift, hari libur, event, marker, atau interaksi detail.
-
-## Action
-
-- `Lihat Semua` Absensi hanya tampil bila user memiliki access ke route Absensi; saat ini hanya Super Admin.
-- `Lihat Semua` Karyawan tidak ditampilkan sampai route Data Karyawan tersedia dan diizinkan.
-- Tombol `Review Dashboard` dan menu tiga titik tidak memiliki action, sehingga tidak dibuat sebagai control interaktif.
-- KPI dan Closing Event tetap disabled/Soon.
-
-## Data dan Query
-
-- Gunakan aggregate query, bukan load seluruh collection untuk count.
-- Query Absensi memakai business date `Asia/Jakarta`.
-- Payload tidak boleh berisi data di luar scope role.
-- Data kosong menghasilkan nilai `0` atau empty state, bukan dummy production data.
-
-## Acceptance Criteria
-
-- `/dashboard` tersedia untuk seluruh authenticated active role.
-- Guest diarahkan ke login.
-- `/admin` mengarah ke `/dashboard`; management routes tetap terlindungi.
-- Nama dan jabatan dinamis dari relasi karyawan/jabatan.
-- Scope Super Admin/Admin/User diterapkan di backend sebelum props dibentuk.
-- Formula persentase mengikuti denominator karyawan aktif dalam scope.
-- Latest employees mengikuti `tanggal_masuk DESC, id DESC`.
-- Foto KTP tidak diekspos.
-- UI mengikuti screenshot approved dan layout internal existing.
-- KPI, Closing Event, dan Employee CRUD tidak ditambahkan.
-- Test, production build, route verification, dan `LOG.md` diperbarui.
+- Semua business date memakai `Asia/Jakarta`.
+- Gunakan aggregate query; jangan query per hari.
+- Jangan mengirim metric yang tidak boleh dilihat actor.
+- Empty period menghasilkan baseline nol, total Rp0, dan pesan kosong; bukan dummy data.
+- KPI dan statistik CMS tidak termasuk Dashboard Home.

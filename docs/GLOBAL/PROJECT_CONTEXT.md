@@ -48,7 +48,7 @@ Ekosistem digital Kampoeng Radja terdiri dari website publik dan sistem internal
 | 1 | **Landing Page / Company Profile** | `docs/LANDING-PAGE/` | **Aktif — implementasi parsial** |
 | 2 | **Dashboard Internal Foundation** | `docs/DASHBOARD/` | **Aktif terbatas — Absensi dan fondasi master data** |
 | 3 | **Sistem KPI Karyawan** | Belum dibuat | **Planned / belum aktif** |
-| 4 | **Sistem Closing Event Marketing** | Belum dibuat | **Planned / belum aktif** |
+| 4 | **Sistem Closing Event Marketing** | `docs/DASHBOARD/CLOSING-EVENT/` | **Aktif — implementasi tersedia** |
 
 Setiap produk akan memiliki dokumentasi sendiri yang menjelaskan requirement, alur pengguna, UI, data, komponen, dan aturan implementasinya.
 
@@ -78,7 +78,7 @@ Pada fase ini pekerjaan difokuskan pada:
 
 Data Absensi Super Admin sudah menjadi workstream aktif berdasarkan requirement stakeholder. Kelola Karyawan menjadi dependency berikutnya, tetapi detail requirement dan permission masih harus disediakan.
 
-Fitur internal KPI dan Closing Event Marketing tetap **belum aktif** dan tidak boleh dibangun hanya karena menu `(Soon)` atau rencana global tersedia.
+Fitur internal KPI tetap **belum aktif**. Closing Event Marketing sudah diaktifkan melalui PRD final dan diimplementasikan sebagai modul Dashboard Internal.
 
 ---
 

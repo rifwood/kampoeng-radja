@@ -8,6 +8,7 @@ use App\Actions\Employee\DeleteEmployee;
 use App\Actions\Employee\ProcessEmployeeExit;
 use App\Actions\Employee\ResolveEmployeeAccountRole;
 use App\Actions\Employee\UpdateEmployee;
+use App\Exports\Employee\EmployeesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Employee\ExitEmployeeRequest;
 use App\Http\Requests\Employee\StoreEmployeeRequest;
@@ -21,33 +22,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeeController extends Controller
 {
     public function index(Request $request): Response
     {
-        [$roleName, $authEmployee] = $this->accessContext($request);
-        $query = $this->scopedQuery($roleName, $authEmployee);
+        [$roleName] = $this->accessContext($request);
+        $query = Karyawan::query();
 
-        if ($roleName !== 'user') {
-            $search = trim($request->string('search')->toString());
-            if ($search !== '') {
-                $query->where(function (Builder $builder) use ($search, $roleName): void {
-                    $builder->where('nama', 'like', "%{$search}%");
-                    if ($roleName === 'super_admin') {
-                        $builder->orWhere('nik', 'like', "%{$search}%");
-                    }
-                });
-            }
-
-            foreach (['jabatan_id', 'status_keaktifan', 'status_kerja'] as $filter) {
-                if ($request->filled($filter)) {
-                    $query->where($filter, $request->input($filter));
+        $search = trim($request->string('search')->toString());
+        if ($search !== '') {
+            $query->where(function (Builder $builder) use ($search, $roleName): void {
+                $builder->where('nama', 'like', "%{$search}%");
+                if ($roleName === 'super_admin') {
+                    $builder->orWhere('nik', 'like', "%{$search}%");
                 }
-            }
-            if ($roleName === 'super_admin' && $request->filled('departemen_id')) {
-                $query->where('departemen_id', $request->integer('departemen_id'));
+            });
+        }
+
+        foreach (['jabatan_id', 'departemen_id', 'status_keaktifan', 'status_kerja'] as $filter) {
+            if ($request->filled($filter)) {
+                $query->where($filter, $request->input($filter));
             }
         }
 
@@ -61,22 +59,21 @@ class EmployeeController extends Controller
         return Inertia::render('Internal/Employee/Index', [
             'employees' => $employees,
             'filters' => [
-                'search' => $roleName === 'user' ? '' : $request->string('search')->toString(),
+                'search' => $request->string('search')->toString(),
                 'jabatan_id' => $request->input('jabatan_id'),
-                'departemen_id' => $roleName === 'super_admin' ? $request->input('departemen_id') : null,
+                'departemen_id' => $request->input('departemen_id'),
                 'status_keaktifan' => $request->input('status_keaktifan'),
                 'status_kerja' => $request->input('status_kerja'),
             ],
             'masterData' => [
                 'jabatan' => Jabatan::query()->orderBy('nama_jabatan')->get(['id', 'nama_jabatan']),
-                'departemen' => $roleName === 'super_admin'
-                    ? Departemen::query()->orderBy('nama_departemen')->get(['id', 'nama_departemen'])
-                    : [],
+                'departemen' => Departemen::query()->orderBy('nama_departemen')->get(['id', 'nama_departemen']),
             ],
             'permissions' => [
                 'roleName' => $roleName,
                 'canManage' => $roleName === 'super_admin',
-                'canSearch' => $roleName !== 'user',
+                'canExport' => $roleName === 'super_admin',
+                'canSearch' => true,
                 'canManageMasters' => $roleName === 'super_admin',
             ],
             'user' => $this->userPayload($request),
@@ -91,6 +88,53 @@ class EmployeeController extends Controller
         ]);
     }
 
+    public function export(Request $request): BinaryFileResponse|RedirectResponse
+    {
+        abort_unless($request->user()?->role()->value('nama_role') === 'super_admin', 403);
+
+        $validated = $request->validate([
+            'status_keaktifan' => ['required', 'in:aktif,nonaktif'],
+        ]);
+        $activeStatus = $validated['status_keaktifan'];
+        $employees = Karyawan::query()
+            ->select([
+                'id',
+                'nama',
+                'nik',
+                'jenis_kelamin',
+                'agama',
+                'tempat_lahir',
+                'tanggal_lahir',
+                'alamat',
+                'status_perkawinan',
+                'pendidikan',
+                'jabatan_id',
+                'departemen_id',
+                'status_kerja',
+                'status_keaktifan',
+                'tanggal_masuk',
+                'tanggal_keluar',
+                'no_hp',
+            ])
+            ->with(['jabatan:id,nama_jabatan', 'departemen:id,nama_departemen'])
+            ->where('status_keaktifan', $activeStatus)
+            ->orderBy('nama')
+            ->orderBy('id')
+            ->get();
+
+        if ($employees->isEmpty()) {
+            return to_route('dashboard.karyawan.index')->with(
+                'error',
+                'Tidak ada data karyawan dengan status keaktifan yang dipilih.',
+            );
+        }
+
+        return Excel::download(
+            new EmployeesExport($employees, $activeStatus),
+            "data-karyawan-{$activeStatus}.xlsx",
+        );
+    }
+
     public function store(StoreEmployeeRequest $request, CreateEmployee $action): RedirectResponse
     {
         $employee = $action->handle($request->validated(), $request->file('foto_ktp'));
@@ -100,8 +144,8 @@ class EmployeeController extends Controller
 
     public function show(Request $request, Karyawan $karyawan, ResolveEmployeeAccountRole $roleResolver): Response
     {
-        [$roleName, $authEmployee] = $this->accessContext($request);
-        $employee = $this->scopedQuery($roleName, $authEmployee)
+        [$roleName] = $this->accessContext($request);
+        $employee = Karyawan::query()
             ->with(['jabatan:id,nama_jabatan', 'departemen:id,nama_departemen', 'user.role:id,nama_role'])
             ->findOrFail($karyawan->id);
 
@@ -176,34 +220,15 @@ class EmployeeController extends Controller
         return [$roleName, $user->karyawan];
     }
 
-    private function scopedQuery(string $roleName, Karyawan $authEmployee): Builder
-    {
-        $query = Karyawan::query();
-
-        if ($roleName === 'admin') {
-            return $authEmployee->departemen_id
-                ? $query->where('departemen_id', $authEmployee->departemen_id)
-                : $query->whereRaw('1 = 0');
-        }
-
-        if ($roleName === 'user') {
-            return $query->whereKey($authEmployee->id);
-        }
-
-        return $query;
-    }
-
     private function employeeListPayload(Karyawan $employee, string $roleName): array
     {
-        return array_filter([
-            'id' => $employee->id,
-            'name' => $employee->nama,
-            'nik' => $roleName === 'super_admin' ? $employee->nik : null,
-            'position' => $employee->jabatan?->nama_jabatan,
-            'department' => $employee->departemen?->nama_departemen,
-            'employmentStatus' => $employee->status_kerja,
-            'activeStatus' => $employee->status_keaktifan,
-        ], fn ($value, $key) => $key !== 'nik' || $roleName === 'super_admin', ARRAY_FILTER_USE_BOTH);
+        $payload = $this->employeeCommonPayload($employee);
+
+        if ($roleName === 'super_admin') {
+            $payload['nik'] = $employee->nik;
+        }
+
+        return $payload;
     }
 
     private function employeeDetailPayload(
@@ -211,29 +236,15 @@ class EmployeeController extends Controller
         string $roleName,
         ?ResolveEmployeeAccountRole $roleResolver = null,
     ): array {
-        $payload = [
-            'id' => $employee->id,
-            'name' => $employee->nama,
-            'birthDate' => $employee->tanggal_lahir?->toDateString(),
-            'birthPlace' => $employee->tempat_lahir,
-            'gender' => $employee->jenis_kelamin,
-            'religion' => $employee->agama,
-            'education' => $employee->pendidikan,
-            'positionId' => $employee->jabatan_id,
-            'position' => $employee->jabatan?->nama_jabatan,
-            'departmentId' => $employee->departemen_id,
-            'department' => $employee->departemen?->nama_departemen,
-            'activeStatus' => $employee->status_keaktifan,
-            'employmentStatus' => $employee->status_kerja,
-            'joinedAt' => $employee->tanggal_masuk?->toDateString(),
-            'leftAt' => $employee->tanggal_keluar?->toDateString(),
-        ];
+        $payload = $this->employeeCommonPayload($employee);
 
         if ($roleName === 'super_admin') {
             $account = $employee->user;
             $suggestedRole = $account ? null : $roleResolver?->handle($employee->jabatan?->nama_jabatan);
 
             $payload += [
+                'positionId' => $employee->jabatan_id,
+                'departmentId' => $employee->departemen_id,
                 'nik' => $employee->nik,
                 'address' => $employee->alamat,
                 'maritalStatus' => $employee->status_perkawinan,
@@ -257,6 +268,25 @@ class EmployeeController extends Controller
         }
 
         return $payload;
+    }
+
+    private function employeeCommonPayload(Karyawan $employee): array
+    {
+        return [
+            'id' => $employee->id,
+            'name' => $employee->nama,
+            'gender' => $employee->jenis_kelamin,
+            'religion' => $employee->agama,
+            'birthDate' => $employee->tanggal_lahir?->toDateString(),
+            'birthPlace' => $employee->tempat_lahir,
+            'education' => $employee->pendidikan,
+            'position' => $employee->jabatan?->nama_jabatan,
+            'department' => $employee->departemen?->nama_departemen,
+            'employmentStatus' => $employee->status_kerja,
+            'activeStatus' => $employee->status_keaktifan,
+            'joinedAt' => $employee->tanggal_masuk?->toDateString(),
+            'leftAt' => $employee->tanggal_keluar?->toDateString(),
+        ];
     }
 
     private function formMasterData(): array
