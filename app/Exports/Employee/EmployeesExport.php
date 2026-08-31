@@ -51,6 +51,8 @@ class EmployeesExport extends DefaultValueBinder implements FromArray, WithColum
                 $employee->pendidikan,
                 $employee->jabatan?->nama_jabatan ?? '-',
                 $employee->departemen?->nama_departemen ?? '-',
+                $employee->penempatan?->nama_penempatan ?? '-',
+                $employee->atasanLangsung?->nama ?? '-',
                 str($employee->status_kerja)->title()->toString(),
                 str($employee->status_keaktifan)->title()->toString(),
                 $this->dateLabel($employee->tanggal_masuk),
@@ -78,6 +80,8 @@ class EmployeesExport extends DefaultValueBinder implements FromArray, WithColum
             'PENDIDIKAN',
             'JABATAN',
             'DEPARTEMEN',
+            'PENEMPATAN',
+            'ATASAN LANGSUNG',
             'STATUS KERJA',
             'STATUS KEAKTIFAN',
             'TANGGAL MASUK',
@@ -93,7 +97,7 @@ class EmployeesExport extends DefaultValueBinder implements FromArray, WithColum
 
     public function bindValue(Cell $cell, mixed $value): bool
     {
-        if (in_array($cell->getColumn(), ['C', 'Q'], true)) {
+        if (in_array($cell->getColumn(), ['C', 'S'], true)) {
             $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
 
             return true;
@@ -109,7 +113,7 @@ class EmployeesExport extends DefaultValueBinder implements FromArray, WithColum
     {
         return [
             'C' => NumberFormat::FORMAT_TEXT,
-            'Q' => NumberFormat::FORMAT_TEXT,
+            'S' => NumberFormat::FORMAT_TEXT,
         ];
     }
 
@@ -131,11 +135,13 @@ class EmployeesExport extends DefaultValueBinder implements FromArray, WithColum
             'J' => 15,
             'K' => 26,
             'L' => 27,
-            'M' => 18,
-            'N' => 20,
+            'M' => 24,
+            'N' => 28,
             'O' => 18,
-            'P' => 18,
-            'Q' => 19,
+            'P' => 20,
+            'Q' => 18,
+            'R' => 18,
+            'S' => 19,
         ];
     }
 
@@ -145,7 +151,7 @@ class EmployeesExport extends DefaultValueBinder implements FromArray, WithColum
     public function styles(Worksheet $sheet): array
     {
         $lastRow = $this->employees->count() + 1;
-        $dataRange = "A1:Q{$lastRow}";
+        $dataRange = "A1:S{$lastRow}";
 
         $sheet->setShowGridlines(false);
         $sheet->freezePane('A2');
@@ -158,7 +164,7 @@ class EmployeesExport extends DefaultValueBinder implements FromArray, WithColum
         $sheet->getStyle($dataRange)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getStyle("A2:A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("C2:G{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("I2:Q{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("I2:S{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("H2:H{$lastRow}")->getAlignment()->setWrapText(true);
 
         return [

@@ -18,7 +18,7 @@ class UpdateMediaBeritaRequest extends FormRequest
     {
         return [
             'judul' => ['required', 'string', 'max:150'],
-            'deskripsi' => ['required', 'string'],
+            'deskripsi' => ['required', 'string', 'max:250'],
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'tanggal_publish' => ['required', 'date'],
         ];

@@ -7,6 +7,9 @@ use App\Http\Requests\Admin\StoreEventPromoRequest;
 use App\Http\Requests\Admin\UpdateEventPromoRequest;
 use App\Models\EventPromo;
 use App\Models\HomeHero;
+use App\Models\MediaBerita;
+use App\Models\Mitra;
+use App\Models\Produk;
 use App\Support\WhatsAppNumber;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -47,11 +50,48 @@ class EventPromoController extends Controller
 
         return Inertia::render('Internal/CMS/Home/Index', [
             'hero' => $this->serializeHero(HomeHero::query()->first()),
+            'newsItems' => MediaBerita::query()
+                ->orderByDesc('tanggal_publish')
+                ->orderByDesc('id')
+                ->get()
+                ->map(fn (MediaBerita $item): array => [
+                    'id' => $item->id,
+                    'judul' => $item->judul,
+                    'deskripsi' => $item->deskripsi,
+                    'foto_url' => Storage::disk('public')->url($item->foto),
+                    'tanggal_publish' => $item->tanggal_publish?->format('Y-m-d\TH:i'),
+                    'tanggal_publish_iso' => $item->tanggal_publish?->toIso8601String(),
+                ]),
             'promotions' => $items,
             'promoSummary' => [
                 'active_count' => $items->where('status', 'aktif')->count(),
                 'total_count' => $items->count(),
             ],
+            'products' => Produk::query()
+                ->orderBy('urutan_tampil')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (Produk $produk): array => [
+                    'id' => $produk->id,
+                    'nama' => $produk->nama,
+                    'deskripsi_singkat' => $produk->deskripsi_singkat,
+                    'deskripsi_lengkap' => $produk->deskripsi_lengkap,
+                    'thumbnail_url' => Storage::disk('public')->url($produk->thumbnail),
+                    'hero_image_url' => Storage::disk('public')->url($produk->hero_image),
+                    'is_active' => $produk->is_active,
+                    'urutan_tampil' => $produk->urutan_tampil,
+                ]),
+            'partners' => Mitra::query()
+                ->orderBy('urutan_tampil')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (Mitra $mitra): array => [
+                    'id' => $mitra->id,
+                    'nama_brand' => $mitra->nama_brand,
+                    'logo_url' => Storage::disk('public')->url($mitra->logo),
+                    'is_active' => $mitra->is_active,
+                    'urutan_tampil' => $mitra->urutan_tampil,
+                ]),
             'user' => [
                 'name' => $name,
                 'initials' => collect(preg_split('/\s+/', trim($name)))
@@ -77,15 +117,6 @@ class EventPromoController extends Controller
         return [
             'id' => $hero->id,
             'video_url' => $hero->video_path ? Storage::disk('public')->url($hero->video_path) : null,
-            'poster_url' => $hero->poster_path ? Storage::disk('public')->url($hero->poster_path) : null,
-            'eyebrow' => $hero->eyebrow,
-            'judul' => $hero->judul,
-            'tagline' => $hero->tagline,
-            'deskripsi' => $hero->deskripsi,
-            'cta_primary_label' => $hero->cta_primary_label,
-            'cta_primary_url' => $hero->cta_primary_url,
-            'cta_secondary_label' => $hero->cta_secondary_label,
-            'cta_secondary_url' => $hero->cta_secondary_url,
         ];
     }
 

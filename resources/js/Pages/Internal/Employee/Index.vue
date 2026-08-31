@@ -16,13 +16,15 @@ const exportModalOpen = ref(false);
 const exportStatus = ref('aktif');
 let searchTimer;
 
-const filterKeys = ['departemen_id', 'jabatan_id', 'status_kerja', 'status_keaktifan'];
+const filterKeys = ['departemen_id', 'jabatan_id', 'penempatan_id', 'status_kerja', 'status_keaktifan'];
 const activeFilterCount = computed(() => filterKeys.filter((key) => props.filters[key]).length);
 const departmentName = (id) => props.masterData.departemen.find((item) => String(item.id) === String(id))?.nama_departemen;
 const positionName = (id) => props.masterData.jabatan.find((item) => String(item.id) === String(id))?.nama_jabatan;
+const placementName = (id) => props.masterData.penempatan.find((item) => String(item.id) === String(id))?.nama_penempatan;
 const activeFilters = computed(() => [
     props.filters.departemen_id && { key: 'departemen_id', label: `Departemen: ${departmentName(props.filters.departemen_id) ?? 'Dipilih'}` },
     props.filters.jabatan_id && { key: 'jabatan_id', label: `Jabatan: ${positionName(props.filters.jabatan_id) ?? 'Dipilih'}` },
+    props.filters.penempatan_id && { key: 'penempatan_id', label: `Penempatan: ${placementName(props.filters.penempatan_id) ?? 'Dipilih'}` },
     props.filters.status_kerja && { key: 'status_kerja', label: `Status Kerja: ${props.filters.status_kerja}` },
     props.filters.status_keaktifan && { key: 'status_keaktifan', label: `Keaktifan: ${props.filters.status_keaktifan}` },
 ].filter(Boolean));
@@ -42,6 +44,7 @@ const applyFilters = () => {
         search: query.search,
         departemen_id: query.departemen_id,
         jabatan_id: query.jabatan_id,
+        penempatan_id: query.penempatan_id,
         status_kerja: query.status_kerja,
         status_keaktifan: query.status_keaktifan,
     });
@@ -110,9 +113,10 @@ const genderLabel = (gender) => gender === 'L' ? 'Laki-laki' : gender === 'P' ? 
                     </div>
 
                     <div v-show="filterPanelOpen" id="employee-filter-panel" class="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                             <label class="block"><span class="mb-1.5 block text-xs font-semibold text-slate-700">Departemen</span><select v-model="query.departemen_id" class="h-10 w-full rounded-lg border-slate-300 py-0 text-sm focus:border-[#1769e0] focus:ring-[#1769e0]"><option value="">Semua Departemen</option><option v-for="item in masterData.departemen" :key="item.id" :value="item.id">{{ item.nama_departemen }}</option></select></label>
                             <label class="block"><span class="mb-1.5 block text-xs font-semibold text-slate-700">Jabatan</span><select v-model="query.jabatan_id" class="h-10 w-full rounded-lg border-slate-300 py-0 text-sm focus:border-[#1769e0] focus:ring-[#1769e0]"><option value="">Semua Jabatan</option><option v-for="item in masterData.jabatan" :key="item.id" :value="item.id">{{ item.nama_jabatan }}</option></select></label>
+                            <label class="block"><span class="mb-1.5 block text-xs font-semibold text-slate-700">Penempatan</span><select v-model="query.penempatan_id" class="h-10 w-full rounded-lg border-slate-300 py-0 text-sm focus:border-[#1769e0] focus:ring-[#1769e0]"><option value="">Semua Penempatan</option><option v-for="item in masterData.penempatan" :key="item.id" :value="item.id">{{ item.nama_penempatan }}</option></select></label>
                             <label class="block"><span class="mb-1.5 block text-xs font-semibold text-slate-700">Status Kerja</span><select v-model="query.status_kerja" class="h-10 w-full rounded-lg border-slate-300 py-0 text-sm capitalize focus:border-[#1769e0] focus:ring-[#1769e0]"><option value="">Semua Status Kerja</option><option v-for="item in ['kontrak','magang','buruh','freelance']" :key="item" :value="item">{{ item }}</option></select></label>
                             <label class="block"><span class="mb-1.5 block text-xs font-semibold text-slate-700">Status Keaktifan</span><select v-model="query.status_keaktifan" class="h-10 w-full rounded-lg border-slate-300 py-0 text-sm focus:border-[#1769e0] focus:ring-[#1769e0]"><option value="">Semua Keaktifan</option><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select></label>
                         </div>
@@ -135,8 +139,11 @@ const genderLabel = (gender) => gender === 'L' ? 'Laki-laki' : gender === 'P' ? 
                                 <th class="px-4 py-3">Pendidikan</th>
                                 <th class="px-4 py-3">Jabatan</th>
                                 <th class="px-4 py-3">Departemen</th>
+                                <th class="px-4 py-3">Penempatan</th>
+                                <th class="px-4 py-3">Atasan Langsung</th>
                                 <th class="px-4 py-3">Status Kerja</th>
                                 <th class="px-4 py-3">Keaktifan</th>
+                                <th class="px-4 py-3">Akun</th>
                                 <th class="px-4 py-3">Tanggal Masuk</th>
                                 <th class="px-4 py-3">Tanggal Keluar</th>
                                 <th class="px-4 py-3 text-center">Aksi</th>
@@ -153,13 +160,16 @@ const genderLabel = (gender) => gender === 'L' ? 'Laki-laki' : gender === 'P' ? 
                                 <td class="px-4 py-3 uppercase text-slate-600">{{ employee.education || '—' }}</td>
                                 <td class="px-4 py-3 text-slate-600">{{ employee.position || '—' }}</td>
                                 <td class="px-4 py-3 text-slate-600">{{ employee.department || 'Tanpa departemen' }}</td>
+                                <td class="px-4 py-3 text-slate-600">{{ employee.placement || 'Tanpa penempatan' }}</td>
+                                <td class="px-4 py-3 text-slate-600">{{ employee.supervisor || '—' }}</td>
                                 <td class="px-4 py-3 capitalize text-slate-600">{{ employee.employmentStatus }}</td>
                                 <td class="px-4 py-3"><span :class="statusClass(employee.activeStatus)" class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold capitalize ring-1 ring-inset">{{ employee.activeStatus }}</span></td>
+                                <td class="px-4 py-3 text-slate-600">{{ employee.hasAccount ? 'Tersedia' : 'Belum ada' }}</td>
                                 <td class="whitespace-nowrap px-4 py-3 text-slate-600">{{ employee.joinedAt || '—' }}</td>
                                 <td class="whitespace-nowrap px-4 py-3 text-slate-600">{{ employee.leftAt || '—' }}</td>
                                 <td class="px-4 py-3"><div class="flex items-center justify-center gap-1.5"><Link :href="route('dashboard.karyawan.show', employee.id)" class="grid h-8 w-8 place-items-center rounded-md border border-blue-200 text-[#0756d8] hover:bg-blue-50" title="Lihat detail" aria-label="Lihat detail"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></Link><Link v-if="permissions.canManage" :href="route('dashboard.karyawan.edit', employee.id)" class="grid h-8 w-8 place-items-center rounded-md border border-slate-200 text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-[#0756d8]" title="Edit karyawan" aria-label="Edit karyawan"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m4 16-.8 4 4-.8L18 8.4 15.6 6 4 16Z"/><path d="m14 7 3 3"/></svg></Link></div></td>
                             </tr>
-                            <tr v-if="employees.data.length === 0"><td :colspan="permissions.roleName === 'super_admin' ? 14 : 13" class="px-6 py-16 text-center"><p class="font-semibold text-slate-600">Data karyawan tidak ditemukan.</p><p class="mt-1 text-xs text-slate-400">Ubah pencarian/filter atau tambahkan data baru.</p></td></tr>
+                            <tr v-if="employees.data.length === 0"><td :colspan="permissions.roleName === 'super_admin' ? 17 : 16" class="px-6 py-16 text-center"><p class="font-semibold text-slate-600">Data karyawan tidak ditemukan.</p><p class="mt-1 text-xs text-slate-400">Ubah pencarian/filter atau tambahkan data baru.</p></td></tr>
                         </tbody>
                     </table>
                 </div>

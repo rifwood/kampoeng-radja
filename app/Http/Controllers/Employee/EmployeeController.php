@@ -16,6 +16,7 @@ use App\Http\Requests\Employee\UpdateEmployeeRequest;
 use App\Models\Departemen;
 use App\Models\Jabatan;
 use App\Models\Karyawan;
+use App\Models\Penempatan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,14 +44,20 @@ class EmployeeController extends Controller
             });
         }
 
-        foreach (['jabatan_id', 'departemen_id', 'status_keaktifan', 'status_kerja'] as $filter) {
+        foreach (['jabatan_id', 'departemen_id', 'penempatan_id', 'status_keaktifan', 'status_kerja'] as $filter) {
             if ($request->filled($filter)) {
                 $query->where($filter, $request->input($filter));
             }
         }
 
         $employees = $query
-            ->with(['jabatan:id,nama_jabatan', 'departemen:id,nama_departemen'])
+            ->with([
+                'jabatan:id,nama_jabatan',
+                'departemen:id,nama_departemen',
+                'penempatan:id,nama_penempatan',
+                'atasanLangsung:id,nama',
+                'user:id,karyawan_id',
+            ])
             ->orderBy('nama')
             ->paginate(15)
             ->withQueryString()
@@ -62,12 +69,14 @@ class EmployeeController extends Controller
                 'search' => $request->string('search')->toString(),
                 'jabatan_id' => $request->input('jabatan_id'),
                 'departemen_id' => $request->input('departemen_id'),
+                'penempatan_id' => $request->input('penempatan_id'),
                 'status_keaktifan' => $request->input('status_keaktifan'),
                 'status_kerja' => $request->input('status_kerja'),
             ],
             'masterData' => [
                 'jabatan' => Jabatan::query()->orderBy('nama_jabatan')->get(['id', 'nama_jabatan']),
                 'departemen' => Departemen::query()->orderBy('nama_departemen')->get(['id', 'nama_departemen']),
+                'penempatan' => Penempatan::query()->orderBy('nama_penempatan')->get(['id', 'nama_penempatan']),
             ],
             'permissions' => [
                 'roleName' => $roleName,
@@ -110,13 +119,20 @@ class EmployeeController extends Controller
                 'pendidikan',
                 'jabatan_id',
                 'departemen_id',
+                'penempatan_id',
+                'atasan_langsung_id',
                 'status_kerja',
                 'status_keaktifan',
                 'tanggal_masuk',
                 'tanggal_keluar',
                 'no_hp',
             ])
-            ->with(['jabatan:id,nama_jabatan', 'departemen:id,nama_departemen'])
+            ->with([
+                'jabatan:id,nama_jabatan',
+                'departemen:id,nama_departemen',
+                'penempatan:id,nama_penempatan',
+                'atasanLangsung:id,nama',
+            ])
             ->where('status_keaktifan', $activeStatus)
             ->orderBy('nama')
             ->orderBy('id')
@@ -137,7 +153,11 @@ class EmployeeController extends Controller
 
     public function store(StoreEmployeeRequest $request, CreateEmployee $action): RedirectResponse
     {
-        $employee = $action->handle($request->validated(), $request->file('foto_ktp'));
+        $employee = $action->handle(
+            $request->validated(),
+            $request->file('foto_ktp'),
+            $request->file('foto_tanda_tangan'),
+        );
 
         return to_route('dashboard.karyawan.show', $employee)->with('success', 'Karyawan berhasil ditambahkan.');
     }
@@ -146,7 +166,13 @@ class EmployeeController extends Controller
     {
         [$roleName] = $this->accessContext($request);
         $employee = Karyawan::query()
-            ->with(['jabatan:id,nama_jabatan', 'departemen:id,nama_departemen', 'user.role:id,nama_role'])
+            ->with([
+                'jabatan:id,nama_jabatan',
+                'departemen:id,nama_departemen',
+                'penempatan:id,nama_penempatan',
+                'atasanLangsung:id,nama',
+                'user.role:id,nama_role',
+            ])
             ->findOrFail($karyawan->id);
 
         return Inertia::render('Internal/Employee/Show', [
@@ -164,18 +190,28 @@ class EmployeeController extends Controller
 
     public function edit(Request $request, Karyawan $karyawan): Response
     {
-        $karyawan->load(['jabatan:id,nama_jabatan', 'departemen:id,nama_departemen']);
+        $karyawan->load([
+            'jabatan:id,nama_jabatan',
+            'departemen:id,nama_departemen',
+            'penempatan:id,nama_penempatan',
+            'atasanLangsung:id,nama',
+        ]);
 
         return Inertia::render('Internal/Employee/Edit', [
             'employee' => $this->employeeDetailPayload($karyawan, 'super_admin'),
-            'masterData' => $this->formMasterData(),
+            'masterData' => $this->formMasterData($karyawan->id),
             'user' => $this->userPayload($request),
         ]);
     }
 
     public function update(UpdateEmployeeRequest $request, Karyawan $karyawan, UpdateEmployee $action): RedirectResponse
     {
-        $action->handle($karyawan, $request->validated(), $request->file('foto_ktp'));
+        $action->handle(
+            $karyawan,
+            $request->validated(),
+            $request->file('foto_ktp'),
+            $request->file('foto_tanda_tangan'),
+        );
 
         return to_route('dashboard.karyawan.show', $karyawan)->with('success', 'Data karyawan berhasil diperbarui.');
     }
@@ -245,12 +281,18 @@ class EmployeeController extends Controller
             $payload += [
                 'positionId' => $employee->jabatan_id,
                 'departmentId' => $employee->departemen_id,
+                'placementId' => $employee->penempatan_id,
+                'supervisorId' => $employee->atasan_langsung_id,
                 'nik' => $employee->nik,
                 'address' => $employee->alamat,
                 'maritalStatus' => $employee->status_perkawinan,
                 'phone' => $employee->no_hp,
                 'hasKtpPhoto' => filled($employee->foto_ktp),
                 'ktpPhotoUrl' => filled($employee->foto_ktp) ? route('dashboard.karyawan.photo', $employee) : null,
+                'hasSignaturePhoto' => filled($employee->foto_tanda_tangan),
+                'signaturePhotoUrl' => filled($employee->foto_tanda_tangan)
+                    ? Storage::disk('public')->url($employee->foto_tanda_tangan)
+                    : null,
                 'account' => $account
                     ? [
                         'username' => $account->username,
@@ -282,6 +324,9 @@ class EmployeeController extends Controller
             'education' => $employee->pendidikan,
             'position' => $employee->jabatan?->nama_jabatan,
             'department' => $employee->departemen?->nama_departemen,
+            'placement' => $employee->penempatan?->nama_penempatan,
+            'supervisor' => $employee->atasanLangsung?->nama,
+            'hasAccount' => $employee->relationLoaded('user') ? $employee->user !== null : $employee->user()->exists(),
             'employmentStatus' => $employee->status_kerja,
             'activeStatus' => $employee->status_keaktifan,
             'joinedAt' => $employee->tanggal_masuk?->toDateString(),
@@ -289,11 +334,16 @@ class EmployeeController extends Controller
         ];
     }
 
-    private function formMasterData(): array
+    private function formMasterData(?int $excludeEmployeeId = null): array
     {
         return [
             'jabatan' => Jabatan::query()->orderBy('nama_jabatan')->get(['id', 'nama_jabatan']),
             'departemen' => Departemen::query()->orderBy('nama_departemen')->get(['id', 'nama_departemen']),
+            'penempatan' => Penempatan::query()->orderBy('nama_penempatan')->get(['id', 'nama_penempatan']),
+            'karyawan' => Karyawan::query()
+                ->when($excludeEmployeeId, fn (Builder $query) => $query->where('id', '!=', $excludeEmployeeId))
+                ->orderBy('nama')
+                ->get(['id', 'nama', 'nik']),
         ];
     }
 

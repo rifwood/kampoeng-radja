@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Exports\Attendance\MonthlyAttendanceExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SaveAttendanceEventDayRequest;
 use App\Http\Requests\Admin\SaveAbsensiRequest;
 use App\Models\Absensi;
+use App\Models\AttendanceDay;
 use App\Models\Karyawan;
 use App\Support\AttendanceAccess;
+use App\Support\AttendanceTimeliness;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +23,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AbsensiController extends Controller
 {
-    public function index(Request $request, AttendanceAccess $access): Response
+    public function index(Request $request, AttendanceAccess $access, AttendanceTimeliness $timeliness): Response
     {
         $permissions = $access->for($request->user());
         abort_unless($permissions['canView'], 403);
@@ -53,21 +56,36 @@ class AbsensiController extends Controller
             ->whereIn('karyawan_id', $employees->pluck('id'))
             ->get()
             ->keyBy('karyawan_id');
+        $attendanceDay = AttendanceDay::query()
+            ->with(['schedules.members'])
+            ->whereDate('tanggal', $selectedDate)
+            ->first();
 
         $employeePayload = $employees
-            ->map(function (Karyawan $employee) use ($attendance): array {
+            ->map(function (Karyawan $employee) use ($attendance, $attendanceDay, $timeliness): array {
                 $record = $attendance->get($employee->id);
+                $schedule = $timeliness->scheduleFor($attendanceDay, $employee->id);
 
                 return [
                     'id' => $employee->id,
+                    'nik' => $employee->nik,
                     'name' => $employee->nama,
                     'initials' => $this->initials($employee->nama),
                     'position' => $employee->jabatan?->nama_jabatan ?? '-',
+                    'scheduleType' => $schedule['type'],
+                    'scheduledTime' => $schedule['expectedTime'],
+                    'toleranceMinutes' => $schedule['toleranceMinutes'],
                     'attendance' => $record ? [
                         'status' => $record->status_kehadiran,
                         'entryTime' => $this->timeValue($record->jam_masuk),
                         'exitTime' => $this->timeValue($record->jam_keluar),
                         'note' => $record->keterangan,
+                        'timeliness' => $timeliness->calculate(
+                            $record->status_kehadiran,
+                            $this->timeValue($record->jam_masuk),
+                            $schedule['expectedTime'],
+                            $schedule['toleranceMinutes'],
+                        ),
                     ] : null,
                 ];
             });
@@ -80,10 +98,65 @@ class AbsensiController extends Controller
             'canMutateDate' => $canMutateDate,
             'isSaved' => $employeePayload->isNotEmpty() && $attendance->count() === $employeePayload->count(),
             'employees' => $employeePayload,
+            'attendanceDay' => $this->attendanceDayPayload($attendanceDay),
             'permissions' => $permissions,
             'reportYears' => $this->reportYears($today),
             'user' => $this->userPayload($request),
         ]);
+    }
+
+    public function saveEventDay(SaveAttendanceEventDayRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        DB::transaction(function () use ($validated, $request): void {
+            $day = AttendanceDay::query()->firstOrNew(['tanggal' => $validated['tanggal']]);
+
+            if (! $day->exists) {
+                $day->created_by = $request->user()->id;
+            }
+
+            $day->fill([
+                'tipe_hari' => 'event',
+                'nama_event' => trim($validated['nama_event']),
+                'updated_by' => $request->user()->id,
+            ])->save();
+
+            $day->schedules()->delete();
+
+            foreach ($validated['schedules'] as $index => $scheduleData) {
+                $schedule = $day->schedules()->create([
+                    'jam_masuk' => $scheduleData['jam_masuk'],
+                    'toleransi_menit' => AttendanceTimeliness::EVENT_TOLERANCE_MINUTES,
+                    'urutan' => $index,
+                ]);
+
+                $schedule->members()->createMany(
+                    collect($scheduleData['member_ids'])->map(fn ($employeeId): array => [
+                        'attendance_day_id' => $day->id,
+                        'karyawan_id' => $employeeId,
+                    ])->all(),
+                );
+            }
+        });
+
+        return to_route('admin.absensi.index', ['tanggal' => $validated['tanggal']])
+            ->with('success', 'Konfigurasi Hari Event berhasil disimpan.');
+    }
+
+    public function destroyEventDay(Request $request, AttendanceAccess $access): RedirectResponse
+    {
+        abort_unless($access->for($request->user())['canManage'], 403);
+
+        $validated = $request->validate(['tanggal' => ['required', 'date_format:Y-m-d']]);
+        $today = CarbonImmutable::today('Asia/Jakarta');
+        $date = CarbonImmutable::createFromFormat('!Y-m-d', $validated['tanggal'], 'Asia/Jakarta');
+        abort_unless($date->betweenIncluded($today->subDay(), $today), 422);
+
+        AttendanceDay::query()->whereDate('tanggal', $date)->delete();
+
+        return to_route('admin.absensi.index', ['tanggal' => $validated['tanggal']])
+            ->with('success', 'Tanggal dikembalikan menjadi Hari Normal.');
     }
 
     public function store(SaveAbsensiRequest $request): RedirectResponse
@@ -134,6 +207,11 @@ class AbsensiController extends Controller
             ->orderBy('absensi.tanggal_absensi')
             ->orderBy('karyawan.nama')
             ->get();
+        $attendanceDays = AttendanceDay::query()
+            ->with(['schedules.members'])
+            ->whereBetween('tanggal', [$periodStart, $periodEnd])
+            ->get()
+            ->keyBy(fn (AttendanceDay $day): string => $day->tanggal->toDateString());
 
         $filename = sprintf(
             'absensi-karyawan-%s-%d.xlsx',
@@ -141,7 +219,7 @@ class AbsensiController extends Controller
             $year,
         );
 
-        return Excel::download(new MonthlyAttendanceExport($records, $period), $filename);
+        return Excel::download(new MonthlyAttendanceExport($records, $period, $attendanceDays), $filename);
     }
 
     private function selectedDate(Request $request, CarbonImmutable $today): CarbonImmutable
@@ -213,5 +291,30 @@ class AbsensiController extends Controller
             ->take(2)
             ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)))
             ->implode('');
+    }
+
+    private function attendanceDayPayload(?AttendanceDay $day): array
+    {
+        if (! $day || $day->tipe_hari !== 'event') {
+            return [
+                'type' => 'normal',
+                'eventName' => null,
+                'scheduleCount' => 0,
+                'committeeCount' => 0,
+                'schedules' => [],
+            ];
+        }
+
+        return [
+            'type' => 'event',
+            'eventName' => $day->nama_event,
+            'scheduleCount' => $day->schedules->count(),
+            'committeeCount' => $day->schedules->sum(fn ($schedule): int => $schedule->members->count()),
+            'schedules' => $day->schedules->map(fn ($schedule): array => [
+                'id' => $schedule->id,
+                'entryTime' => substr((string) $schedule->jam_masuk, 0, 5),
+                'memberIds' => $schedule->members->pluck('karyawan_id')->all(),
+            ])->values(),
+        ];
     }
 }

@@ -3,6 +3,8 @@
 **Status:** READY FOR IMPLEMENTATION
 **Last Updated:** 2026-08-22 — sinkronisasi authoritative Jabatan → role akun
 
+> **Baseline Arif 2026-08-29:** Master organisasi adalah Jabatan, Departemen, dan Penempatan. Jabatan wajib; Departemen/Penempatan nullable. Mapping role authoritative: Dirut/Direktur/Manajer → `super_admin`; SPV/Supervisor → `admin`; Marketing/Marcom/IT/Finance/Kasir/Operasional/General/Facility → `user`. `Staff` dan konsep `Posisi` dibatalkan. Atasan Langsung adalah self-reference Karyawan nullable. KPI tidak diimplementasikan.
+
 Legenda:
 - ✅ ALLOW
 - ❌ DENY
@@ -18,7 +20,7 @@ Legenda:
 | Tambah Karyawan | ✅ | ❌ | ❌ |
 | Edit Karyawan | ✅ | ❌ | ❌ |
 | Detail Karyawan | ✅ | ✅ | ✅ |
-| Jabatan & Departemen | ✅ | ❌ | ❌ |
+| Master Organisasi (Jabatan, Departemen, Penempatan) | ✅ | ❌ | ❌ |
 | Ganti PIN Pertama | 🔒 akun sendiri dengan `must_change_pin = true` | 🔒 akun sendiri dengan `must_change_pin = true` | 🔒 akun sendiri dengan `must_change_pin = true` |
 
 ---
@@ -121,7 +123,7 @@ Mengaktifkan kembali Karyawan tidak otomatis mengaktifkan User.
 
 ---
 
-# 6. Jabatan & Departemen
+# 6. Master Organisasi
 
 | Action | Super Admin | Admin | User |
 |---|---|---|---|
@@ -165,9 +167,9 @@ Aturan authoritative:
 
 | Kategori Jabatan | Role |
 |---|---|
-| Dirut, Direktur, Admin Sistem | `super_admin` |
-| Manajer/Manager, Supervisor | `admin` |
-| Mitra, Operasional/OPS, Facility/FLT | `user` |
+| Dirut, Direktur, Manajer/Manager | `super_admin` |
+| SPV/Supervisor | `admin` |
+| Marketing, Marcom, IT, Finance, Kasir, Operasional, General, Facility | `user` |
 
 Pencocokan tidak case-sensitive dan menggunakan token/kategori Jabatan yang dinormalisasi. Jabatan lain tidak memperoleh fallback.
 

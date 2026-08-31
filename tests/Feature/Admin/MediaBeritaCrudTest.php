@@ -41,17 +41,17 @@ class MediaBeritaCrudTest extends TestCase
     public function test_admin_can_open_media_berita_index(): void
     {
         $this->actingAs($this->userWithRole('admin'))
-            ->get('/admin/media-berita')
+            ->get(route('dashboard.cms.home'))
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/MediaBerita/Index')
-                ->has('items'));
+                ->component('Internal/CMS/Home/Index')
+                ->has('newsItems'));
     }
 
     public function test_super_admin_can_open_media_berita_index(): void
     {
         $this->actingAs($this->userWithRole('super_admin'))
-            ->get('/admin/media-berita')
-            ->assertInertia(fn (Assert $page) => $page->component('Admin/MediaBerita/Index'));
+            ->get(route('dashboard.cms.home'))
+            ->assertInertia(fn (Assert $page) => $page->component('Internal/CMS/Home/Index'));
     }
 
     public function test_admin_can_create_news_with_uploaded_photo_and_server_side_audit(): void
@@ -59,7 +59,7 @@ class MediaBeritaCrudTest extends TestCase
         Storage::fake('public');
         $admin = $this->userWithRole('admin');
 
-        $response = $this->actingAs($admin)->post('/admin/media-berita', [
+        $response = $this->actingAs($admin)->post(route('dashboard.cms.home.media.store'), [
             'judul' => 'Informasi Pengujian',
             'deskripsi' => 'Deskripsi berita untuk pengujian.',
             'foto' => $this->fakeImage('berita.png'),
@@ -68,7 +68,7 @@ class MediaBeritaCrudTest extends TestCase
             'updated_by' => 999999,
         ]);
 
-        $response->assertRedirect(route('admin.media-berita.index'));
+        $response->assertRedirect(route('dashboard.cms.home'));
 
         $item = MediaBerita::query()->sole();
         $this->assertSame($admin->id, $item->created_by);
@@ -82,9 +82,9 @@ class MediaBeritaCrudTest extends TestCase
         Storage::fake('public');
 
         $this->actingAs($this->userWithRole('admin'))
-            ->post('/admin/media-berita', [
+            ->post(route('dashboard.cms.home.media.store'), [
                 'judul' => str_repeat('a', 151),
-                'deskripsi' => '',
+                'deskripsi' => str_repeat('d', 251),
                 'foto' => UploadedFile::fake()->create('document.pdf', 20, 'application/pdf'),
                 'tanggal_publish' => 'bukan-tanggal',
             ])
@@ -101,11 +101,11 @@ class MediaBeritaCrudTest extends TestCase
         $item = $this->createNews($creator, 'media-berita/original.jpg');
         Storage::disk('public')->put($item->foto, 'original');
 
-        $this->actingAs($admin)->patch(route('admin.media-berita.update', $item), [
+        $this->actingAs($admin)->patch(route('dashboard.cms.home.media.update', $item), [
             'judul' => 'Judul Diperbarui',
             'deskripsi' => 'Deskripsi diperbarui.',
             'tanggal_publish' => '2026-08-13 11:00:00',
-        ])->assertRedirect(route('admin.media-berita.index'));
+        ])->assertRedirect(route('dashboard.cms.home'));
 
         $item->refresh();
         $this->assertSame('Judul Diperbarui', $item->judul);
@@ -122,13 +122,13 @@ class MediaBeritaCrudTest extends TestCase
         $item = $this->createNews($admin, 'media-berita/old.jpg');
         Storage::disk('public')->put($item->foto, 'old');
 
-        $this->actingAs($admin)->post(route('admin.media-berita.update', $item), [
+        $this->actingAs($admin)->post(route('dashboard.cms.home.media.update', $item), [
             '_method' => 'patch',
             'judul' => $item->judul,
             'deskripsi' => $item->deskripsi,
             'tanggal_publish' => '2026-08-14 08:00:00',
             'foto' => $this->fakeImage('replacement.png'),
-        ])->assertRedirect(route('admin.media-berita.index'));
+        ])->assertRedirect(route('dashboard.cms.home'));
 
         $newPath = $item->fresh()->foto;
         $this->assertNotSame('media-berita/old.jpg', $newPath);
@@ -144,8 +144,8 @@ class MediaBeritaCrudTest extends TestCase
         Storage::disk('public')->put($item->foto, 'photo');
 
         $this->actingAs($admin)
-            ->delete(route('admin.media-berita.destroy', $item))
-            ->assertRedirect(route('admin.media-berita.index'));
+            ->delete(route('dashboard.cms.home.media.destroy', $item))
+            ->assertRedirect(route('dashboard.cms.home'));
 
         $this->assertDatabaseMissing('media_berita', ['id' => $item->id]);
         Storage::disk('public')->assertMissing('media-berita/delete-me.jpg');
@@ -159,7 +159,7 @@ class MediaBeritaCrudTest extends TestCase
         $this->createNews($admin, 'media-berita/shared.jpg', 'Berita Kedua');
         Storage::disk('public')->put('media-berita/shared.jpg', 'shared');
 
-        $this->actingAs($admin)->delete(route('admin.media-berita.destroy', $first));
+        $this->actingAs($admin)->delete(route('dashboard.cms.home.media.destroy', $first));
 
         Storage::disk('public')->assertExists('media-berita/shared.jpg');
     }

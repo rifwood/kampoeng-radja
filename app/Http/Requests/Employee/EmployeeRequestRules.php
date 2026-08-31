@@ -21,12 +21,20 @@ trait EmployeeRequestRules
             'pendidikan' => ['required', Rule::in(['SD', 'SMP', 'SMA', 'MAN', 'SMK', 'D3', 'D4', 'S1', 'S2', 'S3'])],
             'jabatan_id' => ['required', 'integer', Rule::exists('jabatan', 'id')],
             'departemen_id' => ['nullable', 'integer', Rule::exists('departemen', 'id')],
+            'penempatan_id' => ['nullable', 'integer', Rule::exists('penempatan', 'id')],
+            'atasan_langsung_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('karyawan', 'id'),
+                ...($employeeId ? [Rule::notIn([$employeeId])] : []),
+            ],
             'status_keaktifan' => ['required', Rule::in(['aktif', 'nonaktif'])],
             'status_kerja' => ['required', Rule::in(['kontrak', 'magang', 'buruh', 'freelance'])],
             'tanggal_masuk' => ['required', 'date', 'before_or_equal:today'],
             'tanggal_keluar' => ['nullable', 'date', 'after_or_equal:tanggal_masuk', 'before_or_equal:today'],
             'no_hp' => ['required', 'string', 'max:20'],
             'foto_ktp' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'foto_tanda_tangan' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:5120'],
         ];
     }
 }

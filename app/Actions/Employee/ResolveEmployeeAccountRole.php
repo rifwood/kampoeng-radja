@@ -6,11 +6,21 @@ use Illuminate\Support\Str;
 
 class ResolveEmployeeAccountRole
 {
-    private const SUPER_ADMIN_TOKENS = ['dirut', 'direktur'];
+    private const SUPER_ADMIN_TOKENS = ['dirut', 'direktur', 'manajer', 'manager'];
 
-    private const ADMIN_TOKENS = ['manajer', 'manager', 'supervisor'];
+    private const ADMIN_TOKENS = ['spv', 'supervisor'];
 
-    private const USER_TOKENS = ['mitra', 'operasional', 'ops', 'facility', 'flt'];
+    private const USER_TOKENS = [
+        'marketing',
+        'marcom',
+        'markom',
+        'it',
+        'finance',
+        'kasir',
+        'operasional',
+        'general',
+        'facility',
+    ];
 
     public function handle(?string $positionName): ?string
     {
@@ -29,8 +39,7 @@ class ResolveEmployeeAccountRole
 
         // Hierarchy must be resolved before organizational groups. For example,
         // "Direktur Operasional" is a super admin, not a user.
-        if (array_intersect($tokens, self::SUPER_ADMIN_TOKENS)
-            || str_contains($normalized, 'admin sistem')) {
+        if (array_intersect($tokens, self::SUPER_ADMIN_TOKENS)) {
             return 'super_admin';
         }
 

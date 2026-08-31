@@ -10,19 +10,27 @@ use Throwable;
 
 class CreateEmployee
 {
-    public function handle(array $data, ?UploadedFile $photo): Karyawan
+    public function handle(array $data, ?UploadedFile $photo, ?UploadedFile $signature): Karyawan
     {
         $path = $photo?->store('employee-ktp', 'local');
+        $signaturePath = $signature?->store('karyawan/tanda-tangan', 'public');
 
         try {
-            return DB::transaction(function () use ($data, $path): Karyawan {
-                unset($data['foto_ktp']);
+            return DB::transaction(function () use ($data, $path, $signaturePath): Karyawan {
+                unset($data['foto_ktp'], $data['foto_tanda_tangan']);
 
-                return Karyawan::create([...$data, 'foto_ktp' => $path ?: null]);
+                return Karyawan::create([
+                    ...$data,
+                    'foto_ktp' => $path ?: null,
+                    'foto_tanda_tangan' => $signaturePath ?: null,
+                ]);
             });
         } catch (Throwable $exception) {
             if ($path) {
                 Storage::disk('local')->delete($path);
+            }
+            if ($signaturePath) {
+                Storage::disk('public')->delete($signaturePath);
             }
 
             throw $exception;

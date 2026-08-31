@@ -25,6 +25,7 @@ canExportAttendance
 | Input/edit sebelum kemarin | DENY | DENY | DENY |
 | Delete | DENY | DENY | DENY |
 | Export Excel bulanan multi-sheet | ALLOW | DENY | DENY |
+| Atur Hari Event dan jadwal Panitia | ALLOW | DENY | DENY |
 
 ## Navigation
 
@@ -53,7 +54,9 @@ dengan tanggal kalender `Asia/Jakarta`, bukan rolling 24 jam.
 - I/A membuat `jam_masuk` dan `jam_keluar` menjadi NULL;
 - jika keduanya ada, `jam_keluar >= jam_masuk`.
 - jam masuk maksimal `12:00`;
-- Terlambat dihitung hanya untuk H dengan jam masuk `> 08:30`;
+- Ketepatan Hari Normal: sampai `08:30` Tepat Waktu, `08:31`–`08:40` Dalam Toleransi, setelah `08:40` Terlambat;
+- Ketepatan Panitia Hari Event memakai target jadwal masing-masing dengan toleransi tetap 5 menit;
+- Admin/User tidak dapat membuat, mengubah, atau menonaktifkan konfigurasi Hari Event;
 - Pulang Awal dihitung hanya untuk H dengan jam keluar `< 16:30`;
 - jam NULL tidak menghasilkan status turunan.
 

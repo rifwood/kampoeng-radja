@@ -32,9 +32,18 @@ row I/A; perubahan menit hanya melalui tombol mouse. Jam Keluar boleh kosong.
 Jika I/A dipilih, kedua input jam dinonaktifkan dan dikosongkan, sementara
 backend tetap membersihkan nilainya. Keterangan opsional.
 
-Jam masuk H setelah `08:30` menampilkan indikator kecil `Terlambat`. Jam keluar
-H sebelum `16:30` menampilkan indikator kecil `Pulang Awal`. Tidak ada indikator
-jika nilai jam terkait masih kosong.
+Kolom Ketepatan menampilkan badge Tepat Waktu (biru), Dalam Toleransi (amber),
+atau Terlambat (merah). Hari Normal memakai target `08:30` dengan toleransi 10
+menit. Pada Hari Event, Panitia memakai target jadwal masing-masing dengan
+toleransi 5 menit, sedangkan karyawan non-Panitia tetap memakai aturan Normal.
+Status I/A dan jam masuk kosong tidak menampilkan status Ketepatan. Jam keluar H
+sebelum `16:30` tetap menampilkan indikator kecil `Pulang Awal`.
+
+Super Admin dapat mengubah tanggal hari ini/kemarin menjadi Hari Event melalui
+modal konfigurasi. Modal memuat nama Event, beberapa jadwal dengan jam masuk
+fleksibel, pencarian nama/NIK, pilihan multi-karyawan, dan pencegahan satu
+karyawan berada pada dua jadwal. Konfigurasi dapat diedit atau dikembalikan ke
+Hari Normal melalui dialog konfirmasi tanpa menghapus record Absensi.
 
 Tombol `Simpan Absensi` harus bisa diklik ketika payload valid dan tidak boleh
 stuck disabled karena state frontend.

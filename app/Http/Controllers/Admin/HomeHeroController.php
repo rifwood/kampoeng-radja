@@ -16,52 +16,41 @@ class HomeHeroController extends Controller
     {
         $hero = HomeHero::query()->firstOrNew(['id' => 1]);
         $oldVideoPath = $hero->video_path;
-        $oldPosterPath = $hero->poster_path;
         $newVideoPath = null;
-        $newPosterPath = null;
 
         try {
             $newVideoPath = $request->file('video')?->store('home/hero', 'public');
-            $newPosterPath = $request->file('poster')?->store('home/hero', 'public');
 
-            DB::transaction(function () use ($request, $hero, $newVideoPath, $newPosterPath): void {
+            DB::transaction(function () use ($request, $hero, $newVideoPath): void {
+                if (! $hero->exists) {
+                    // Required by the legacy schema, but no longer exposed by the video-only Hero.
+                    $hero->judul = 'Kampoeng Radja';
+                }
+
                 $hero->fill([
-                    ...$request->safe()->only([
-                        'eyebrow',
-                        'judul',
-                        'tagline',
-                        'deskripsi',
-                        'cta_primary_label',
-                        'cta_primary_url',
-                        'cta_secondary_label',
-                        'cta_secondary_url',
-                    ]),
                     'video_path' => $newVideoPath ?? $hero->video_path,
-                    'poster_path' => $newPosterPath ?? $hero->poster_path,
                     'updated_by' => $request->user()->id,
                 ])->save();
             });
         } catch (Throwable $exception) {
-            Storage::disk('public')->delete(array_values(array_filter([$newVideoPath, $newPosterPath])));
+            if ($newVideoPath) {
+                Storage::disk('public')->delete($newVideoPath);
+            }
 
             throw $exception;
         }
 
         if ($newVideoPath && $oldVideoPath) {
-            $this->deleteAssetIfUnused($oldVideoPath, 'video_path');
-        }
-
-        if ($newPosterPath && $oldPosterPath) {
-            $this->deleteAssetIfUnused($oldPosterPath, 'poster_path');
+            $this->deleteAssetIfUnused($oldVideoPath);
         }
 
         return to_route('dashboard.cms.home')
             ->with('success', 'Hero Beranda berhasil diperbarui.');
     }
 
-    private function deleteAssetIfUnused(string $path, string $column): void
+    private function deleteAssetIfUnused(string $path): void
     {
-        if (! HomeHero::query()->where($column, $path)->exists()) {
+        if (! HomeHero::query()->where('video_path', $path)->exists()) {
             Storage::disk('public')->delete($path);
         }
     }

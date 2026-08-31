@@ -21,8 +21,8 @@ Matrix ini memisahkan keputusan yang sudah ada dari implementation truth. `TBD` 
 | Data Karyawan | `super_admin` | Semua | Semua | Company-wide | View/create/update/deactivate/exit/conditional delete; create/manage account | Confirmed di Employee PRD/PERMISSIONS | Allowed melalui `auth + active`; mutation melalui `super_admin`; perubahan Jabatan menyinkronkan role akun secara transaksional. |
 | Data Karyawan | `admin` | Semua | Semua | Company-wide | Read-only, 12 atribut umum | Confirmed di Employee PRD/PERMISSIONS | Allowed company-wide; mutation dan field sensitif denied. |
 | Data Karyawan | `user` | Semua | Semua | Company-wide | Read-only, 12 atribut umum | Confirmed di Employee PRD/PERMISSIONS | Allowed company-wide; mutation dan field sensitif denied. |
-| Jabatan & Departemen | `super_admin` | Semua | Semua | Semua master | View/create/update/delete dengan reference guard | Confirmed | Allowed melalui `auth + active + super_admin`. |
-| Jabatan & Departemen | `admin`, `user` | Semua | Semua | None | None | Confirmed deny | Denied (403). |
+| Master Organisasi (Jabatan, Departemen, Penempatan) | `super_admin` | Semua | Semua | Semua master | View/create/update/delete dengan reference guard | Confirmed | Allowed melalui `auth + active + super_admin`. |
+| Master Organisasi (Jabatan, Departemen, Penempatan) | `admin`, `user` | Semua | Semua | None | None | Confirmed deny | Denied (403). |
 | Ganti PIN Pertama | Semua authenticated role | Semua | Semua | Akun sendiri | Update PIN sementara | Confirmed | `must_change_pin=true` membatasi akses ke change PIN + logout sampai selesai. |
 | KPI | Semua role | TBD | TBD | TBD | TBD | Planned, belum aktif | Tidak diimplementasikan. |
 | Closing Event | `super_admin` | Semua | Semua | Company-wide | View/create/update/delete/master | Confirmed di Closing Event PRD/PERMISSIONS | Implemented dengan capability backend. |

@@ -15,6 +15,7 @@ class MonthlyAttendanceExport implements WithMultipleSheets
     public function __construct(
         private readonly Collection $records,
         private readonly CarbonImmutable $period,
+        private readonly Collection $attendanceDays,
     ) {}
 
     /**
@@ -28,7 +29,7 @@ class MonthlyAttendanceExport implements WithMultipleSheets
                 ->sortBy(fn (Absensi $record): string => mb_strtolower($record->karyawan?->nama ?? ''))
                 ->values());
 
-        $sheets = [new MonthlyAttendanceSummarySheet($this->records)];
+        $sheets = [new MonthlyAttendanceSummarySheet($this->records, $this->attendanceDays)];
         $date = $this->period->startOfMonth();
         $lastDate = $this->period->endOfMonth();
 

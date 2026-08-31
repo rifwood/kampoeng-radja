@@ -47,17 +47,19 @@ Detail mengikuti `canViewClosingEvent`.
 | SPV Marcom | Supervisor + Marcom | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | SPV Marketing | Supervisor + Marketing | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | Karyawan Marketing biasa | Marketing, bukan rule di atas | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Role User | Semua jabatan/departemen | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Pengguna lain | selain kondisi di atas | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ## Prioritas Evaluasi
 
 ```text
 1. Super Admin
-2. Manajer / Manager
-3. Supervisor + Marcom
-4. Supervisor + Marketing
-5. Karyawan biasa + Marketing
-6. Deny
+2. Role User → View/Detail read-only
+3. Manajer / Manager
+4. Supervisor + Marcom
+5. Supervisor + Marketing
+6. Karyawan biasa + Marketing
+7. Deny
 ```
 
 Contoh:
@@ -96,11 +98,13 @@ Closing Event
 └── Master Data Event
 ```
 
-### Manajer / SPV Marcom / SPV Marketing / Karyawan Marketing
+### Manajer / SPV Marcom / SPV Marketing / Karyawan Marketing / Role User
 ```text
 Closing Event
 └── Data Closing Event
 ```
+
+Role User hanya memperoleh Data Closing Event dan tidak memperoleh action mutation, Export, atau Master Data Event.
 
 ### Selain itu
 Tidak tampil. Direct URL tetap ditolak backend.

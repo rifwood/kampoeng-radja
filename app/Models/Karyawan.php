@@ -37,6 +37,21 @@ class Karyawan extends Model
         return $this->belongsTo(Departemen::class);
     }
 
+    public function penempatan(): BelongsTo
+    {
+        return $this->belongsTo(Penempatan::class);
+    }
+
+    public function atasanLangsung(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'atasan_langsung_id');
+    }
+
+    public function bawahan(): HasMany
+    {
+        return $this->hasMany(self::class, 'atasan_langsung_id');
+    }
+
     public function user(): HasOne
     {
         return $this->hasOne(User::class);

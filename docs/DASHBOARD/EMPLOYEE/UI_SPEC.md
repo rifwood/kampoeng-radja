@@ -29,7 +29,7 @@ Harus konsisten:
 
 Active navigation:
 - Data Karyawan pada list/detail/tambah/edit.
-- Jabatan & Departemen pada halaman master.
+- Master Organisasi (Jabatan, Departemen, dan Penempatan) pada halaman master.
 
 ---
 
@@ -316,9 +316,9 @@ Jika tidak eligible:
 
 ---
 
-# 9. Jabatan & Departemen
+# 9. Master Organisasi
 
-Visual mengikuti `departemen_jabatan.png`.
+Visual Jabatan dan Departemen tetap mengikuti `departemen_jabatan.png`; Penempatan ditambahkan dengan pola card/list yang sama tanpa redesign halaman.
 
 Desktop:
 - dua card berdampingan:

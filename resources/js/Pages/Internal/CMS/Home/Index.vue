@@ -1,7 +1,10 @@
 <script setup>
 import CmsSectionCard from '@/Components/Internal/CMS/Home/CmsSectionCard.vue';
 import HeroManager from '@/Components/Internal/CMS/Home/HeroManager.vue';
+import MediaBeritaManager from '@/Components/Internal/CMS/Home/MediaBeritaManager.vue';
+import PartnerManager from '@/Components/Internal/CMS/Home/PartnerManager.vue';
 import PromoManager from '@/Components/Internal/CMS/Home/PromoManager.vue';
+import ProductManager from '@/Components/Internal/CMS/Home/ProductManager.vue';
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -9,22 +12,16 @@ import { computed } from 'vue';
 defineProps({
     user: { type: Object, required: true },
     hero: { type: Object, default: null },
+    newsItems: { type: Array, required: true },
     promotions: { type: Array, required: true },
     promoSummary: { type: Object, required: true },
+    products: { type: Array, required: true },
+    partners: { type: Array, required: true },
 });
 
 const page = usePage();
 const success = computed(() => page.props.flash?.success);
 const error = computed(() => page.props.flash?.error);
-const placeholders = [
-    { title: 'Hero', icon: 'HR', description: 'Konten utama pada bagian paling atas Beranda.' },
-    { title: 'Informasi Panduan', icon: 'IP', description: 'Informasi singkat dan panduan untuk pengunjung.' },
-    { title: 'Media & Berita', icon: 'MB', description: 'Pilihan berita yang ditampilkan pada Beranda.' },
-    { title: 'Produk', icon: 'PR', description: 'Showcase paket, fasilitas, dan aktivitas Kampoeng Radja.' },
-    { title: 'Wahana Unggulan', icon: 'WU', description: 'Pilihan wahana unggulan pada halaman utama.' },
-    { title: 'Mitra', icon: 'MT', description: 'Logo mitra yang ditampilkan kepada pengunjung.' },
-    { title: 'Map', icon: 'MP', description: 'Lokasi Kampoeng Radja pada peta Beranda.' },
-];
 </script>
 
 <template>
@@ -41,18 +38,22 @@ const placeholders = [
             <div v-if="error" class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ error }}</div>
 
             <div class="space-y-3">
-                <CmsSectionCard :title="placeholders[0].title" :description="placeholders[0].description" :icon="placeholders[0].icon" :default-open="true">
+                <CmsSectionCard title="Hero" description="Konten utama pada bagian paling atas Beranda." icon="HR" :default-open="true">
                     <HeroManager :hero="hero" />
                 </CmsSectionCard>
-                <CmsSectionCard :title="placeholders[1].title" :description="placeholders[1].description" :icon="placeholders[1].icon"><p class="px-5 py-6 text-sm text-slate-500">Pengelolaan section ini akan dikembangkan pada tahap berikutnya.</p></CmsSectionCard>
-                <CmsSectionCard :title="placeholders[2].title" :description="placeholders[2].description" :icon="placeholders[2].icon"><p class="px-5 py-6 text-sm text-slate-500">Pengelolaan section ini akan dikembangkan pada tahap berikutnya.</p></CmsSectionCard>
+                <CmsSectionCard title="Media & Berita" description="Kelola berita terbaru yang tampil pada Beranda dan halaman publik." icon="MB">
+                    <MediaBeritaManager :items="newsItems" />
+                </CmsSectionCard>
 
                 <CmsSectionCard title="Promo" description="Kelola promo yang tampil pada carousel Beranda." icon="PM" :default-open="true">
                     <PromoManager :promotions="promotions" :summary="promoSummary" />
                 </CmsSectionCard>
 
-                <CmsSectionCard v-for="item in placeholders.slice(3)" :key="item.title" :title="item.title" :description="item.description" :icon="item.icon">
-                    <p class="px-5 py-6 text-sm text-slate-500">Pengelolaan section ini akan dikembangkan pada tahap berikutnya.</p>
+                <CmsSectionCard title="Produk" description="Kelola showcase paket, fasilitas, dan aktivitas Kampoeng Radja." icon="PR">
+                    <ProductManager :products="products" />
+                </CmsSectionCard>
+                <CmsSectionCard title="Mitra" description="Kelola logo Mitra yang ditampilkan pada Beranda." icon="MT">
+                    <PartnerManager :partners="partners" />
                 </CmsSectionCard>
             </div>
         </div>

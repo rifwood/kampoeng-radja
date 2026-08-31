@@ -11,7 +11,7 @@ Dashboard Internal menggunakan Laravel, Inertia, Vue, Tailwind, dan session auth
 | Dashboard Home | Role-aware Super Admin/Admin/User | `IMPLEMENTED` | `DASHBOARD-HOME/` |
 | Data Absensi | Company-wide monitoring; mutation/export khusus Super Admin | `IMPLEMENTED` | `ATTENDANCE/` |
 | Data Karyawan | CRUD, scoped read-only, akun Karyawan | `IMPLEMENTED` | `EMPLOYEE/` |
-| Jabatan & Departemen | Master data Employee | `IMPLEMENTED` | `EMPLOYEE/` |
+| Jabatan, Departemen & Penempatan | Master data Employee | `IMPLEMENTED` | `EMPLOYEE/` |
 | CMS | Requirement berasal dari Landing Page Fase 1 | Media Berita dan Event Promo tersedia | `LANDING-PAGE/PRD.md` + `LOG.md` |
 | KPI | Belum aktif | `NOT STARTED` | Jangan membuat docs modul sebelum requirement aktif |
 | Closing Event | Requirement final role+jabatan+departemen | `IMPLEMENTED` | `CLOSING-EVENT/` |

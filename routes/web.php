@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\EventPromoController;
 use App\Http\Controllers\Admin\GaleriEventController;
 use App\Http\Controllers\Admin\HomeHeroController;
 use App\Http\Controllers\Admin\MediaBeritaController;
+use App\Http\Controllers\Admin\MitraController;
+use App\Http\Controllers\Admin\ProdukController;
 use App\Http\Controllers\Admin\WahanaController;
 use App\Http\Controllers\ClosingEvent\ClosingEventController;
 use App\Http\Controllers\ClosingEvent\ClosingEventMasterController;
@@ -14,10 +16,13 @@ use App\Http\Controllers\Employee\EmployeeAccountController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Employee\EmployeeMasterController;
 use App\Http\Controllers\Employee\JabatanController;
+use App\Http\Controllers\Employee\PenempatanController;
 use App\Http\Controllers\PublicPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicPageController::class, 'home'])->name('home');
+
+
 Route::get('/tentang-kami', [PublicPageController::class, 'about'])->name('tentang-kami');
 Route::get('/wahana', [PublicPageController::class, 'rides'])->name('wahana');
 Route::get('/galeri-event', [PublicPageController::class, 'events'])->name('galeri-event');
@@ -81,6 +86,18 @@ Route::prefix('dashboard')
                 Route::patch('beranda/promo/{eventPromo}/status', [EventPromoController::class, 'toggleStatus'])->name('home.promo.status');
                 Route::delete('beranda/promo/{eventPromo}', [EventPromoController::class, 'destroy'])->name('home.promo.destroy');
 
+                Route::post('beranda/media-berita', [MediaBeritaController::class, 'store'])->name('home.media.store');
+                Route::patch('beranda/media-berita/{mediaBerita}', [MediaBeritaController::class, 'update'])->name('home.media.update');
+                Route::delete('beranda/media-berita/{mediaBerita}', [MediaBeritaController::class, 'destroy'])->name('home.media.destroy');
+
+                Route::post('beranda/produk', [ProdukController::class, 'store'])->name('home.products.store');
+                Route::patch('beranda/produk/{produk}', [ProdukController::class, 'update'])->name('home.products.update');
+                Route::delete('beranda/produk/{produk}', [ProdukController::class, 'destroy'])->name('home.products.destroy');
+
+                Route::post('beranda/mitra', [MitraController::class, 'store'])->name('home.partners.store');
+                Route::patch('beranda/mitra/{mitra}', [MitraController::class, 'update'])->name('home.partners.update');
+                Route::delete('beranda/mitra/{mitra}', [MitraController::class, 'destroy'])->name('home.partners.destroy');
+
                 Route::get('wahana', [WahanaController::class, 'index'])->name('wahana.index');
                 Route::post('wahana', [WahanaController::class, 'store'])->name('wahana.store');
                 Route::patch('wahana/{wahana}', [WahanaController::class, 'update'])->name('wahana.update');
@@ -91,6 +108,7 @@ Route::prefix('dashboard')
                 Route::post('galeri-event', [GaleriEventController::class, 'store'])->name('gallery.store');
                 Route::patch('galeri-event/{galeriEvent}', [GaleriEventController::class, 'update'])->name('gallery.update');
                 Route::delete('galeri-event/{galeriEvent}', [GaleriEventController::class, 'destroy'])->name('gallery.destroy');
+
             });
 
         Route::middleware('super_admin')->group(function (): void {
@@ -110,6 +128,9 @@ Route::prefix('dashboard')
             Route::post('departemen', [DepartemenController::class, 'store'])->name('departemen.store');
             Route::put('departemen/{departemen}', [DepartemenController::class, 'update'])->name('departemen.update');
             Route::delete('departemen/{departemen}', [DepartemenController::class, 'destroy'])->name('departemen.destroy');
+            Route::post('penempatan', [PenempatanController::class, 'store'])->name('penempatan.store');
+            Route::put('penempatan/{penempatan}', [PenempatanController::class, 'update'])->name('penempatan.update');
+            Route::delete('penempatan/{penempatan}', [PenempatanController::class, 'destroy'])->name('penempatan.destroy');
         });
     });
 
@@ -120,6 +141,8 @@ Route::prefix('admin')
         Route::get('absensi/export', [AbsensiController::class, 'export'])->name('absensi.export');
         Route::get('absensi', [AbsensiController::class, 'index'])->name('absensi.index');
         Route::put('absensi', [AbsensiController::class, 'store'])->name('absensi.store');
+        Route::put('absensi/hari-event', [AbsensiController::class, 'saveEventDay'])->name('absensi.event-day.store');
+        Route::delete('absensi/hari-event', [AbsensiController::class, 'destroyEventDay'])->name('absensi.event-day.destroy');
     });
 
 Route::prefix('admin')

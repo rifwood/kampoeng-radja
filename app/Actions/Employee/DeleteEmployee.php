@@ -18,10 +18,14 @@ class DeleteEmployee
         }
 
         $photo = $employee->foto_ktp;
+        $signature = $employee->foto_tanda_tangan;
         DB::transaction(fn () => $employee->delete());
 
         if ($photo) {
             Storage::disk('local')->delete($photo);
+        }
+        if ($signature) {
+            Storage::disk('public')->delete($signature);
         }
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StoreMediaBeritaRequest;
 use App\Http\Requests\Admin\UpdateMediaBeritaRequest;
 use App\Models\MediaBerita;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -15,19 +16,23 @@ use Throwable;
 
 class MediaBeritaController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         return Inertia::render('Admin/MediaBerita/Index', [
             'items' => MediaBerita::query()
-                ->latest('tanggal_publish')
+                ->orderByDesc('tanggal_publish')
+                ->orderByDesc('id')
                 ->get()
                 ->map(fn (MediaBerita $item): array => $this->serialize($item)),
+            'user' => $this->userPayload($request),
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('Admin/MediaBerita/Create');
+        return Inertia::render('Admin/MediaBerita/Create', [
+            'user' => $this->userPayload($request),
+        ]);
     }
 
     public function store(StoreMediaBeritaRequest $request): RedirectResponse
@@ -47,14 +52,15 @@ class MediaBeritaController extends Controller
             throw $exception;
         }
 
-        return to_route('admin.media-berita.index')
+        return $this->redirectAfterMutation($request)
             ->with('success', 'Media & Berita berhasil ditambahkan.');
     }
 
-    public function edit(MediaBerita $mediaBerita): Response
+    public function edit(Request $request, MediaBerita $mediaBerita): Response
     {
         return Inertia::render('Admin/MediaBerita/Edit', [
             'item' => $this->serialize($mediaBerita),
+            'user' => $this->userPayload($request),
         ]);
     }
 
@@ -81,18 +87,18 @@ class MediaBeritaController extends Controller
             $this->deleteFileIfUnused($oldPath);
         }
 
-        return to_route('admin.media-berita.index')
+        return $this->redirectAfterMutation($request)
             ->with('success', 'Media & Berita berhasil diperbarui.');
     }
 
-    public function destroy(MediaBerita $mediaBerita): RedirectResponse
+    public function destroy(Request $request, MediaBerita $mediaBerita): RedirectResponse
     {
         $path = $mediaBerita->foto;
 
         DB::transaction(fn () => $mediaBerita->delete());
         $this->deleteFileIfUnused($path);
 
-        return to_route('admin.media-berita.index')
+        return $this->redirectAfterMutation($request)
             ->with('success', 'Media & Berita berhasil dihapus.');
     }
 
@@ -108,6 +114,7 @@ class MediaBeritaController extends Controller
             'foto' => $item->foto,
             'foto_url' => Storage::disk('public')->url($item->foto),
             'tanggal_publish' => $item->tanggal_publish?->format('Y-m-d\TH:i'),
+            'tanggal_publish_iso' => $item->tanggal_publish?->toIso8601String(),
         ];
     }
 
@@ -118,5 +125,32 @@ class MediaBeritaController extends Controller
         if (! $isStillUsed) {
             Storage::disk('public')->delete($path);
         }
+    }
+
+    private function redirectAfterMutation(Request $request): RedirectResponse
+    {
+        return $request->routeIs('dashboard.cms.home.*')
+            ? to_route('dashboard.cms.home')
+            : to_route('admin.media-berita.index');
+    }
+
+    /**
+     * @return array{name: string, initials: string, roleName: string, roleLabel: string}
+     */
+    private function userPayload(Request $request): array
+    {
+        $name = $request->user()->karyawan()->value('nama') ?? $request->user()->username;
+        $roleName = $request->user()->role()->value('nama_role') ?? 'user';
+
+        return [
+            'name' => $name,
+            'initials' => collect(preg_split('/\s+/', trim($name)))
+                ->filter()
+                ->take(2)
+                ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)))
+                ->implode(''),
+            'roleName' => $roleName,
+            'roleLabel' => str($roleName)->replace('_', ' ')->title()->toString(),
+        ];
     }
 }

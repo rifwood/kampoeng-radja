@@ -39,6 +39,8 @@ const personalRows = computed(() => rows([
 const workRows = computed(() => rows([
     { label: 'Jabatan', value: props.employee.position },
     { label: 'Departemen', value: props.employee.department || 'Tanpa departemen' },
+    { label: 'Penempatan', value: props.employee.placement || 'Tanpa penempatan' },
+    { label: 'Atasan Langsung', value: props.employee.supervisor || '—' },
     { label: 'Status Kerja', value: props.employee.employmentStatus, badge: 'employment' },
     { label: 'Status Keaktifan', value: props.employee.activeStatus, badge: 'active' },
     { label: 'Tanggal Masuk', value: props.employee.joinedAt },
@@ -185,7 +187,10 @@ const updateAccountStatus = (isActive) => {
                         <span class="grid h-8 w-8 place-items-center rounded-lg bg-white text-[#1769e0] ring-1 ring-blue-100"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6M8 13h8M8 17h6" /></svg></span>
                         <h3 class="font-semibold text-[#15356f]">Dokumen</h3>
                     </div>
-                    <dl class="p-5"><div class="grid gap-2 sm:grid-cols-[150px_12px_minmax(0,1fr)] sm:gap-2"><dt class="text-xs font-medium text-slate-500 sm:py-2">Dokumen KTP</dt><span class="hidden py-2 text-sm text-slate-300 sm:block">:</span><dd><a v-if="employee.ktpPhotoUrl" :href="employee.ktpPhotoUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-[#0756ba] transition hover:bg-blue-100"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>Lihat Dokumen</a><span v-else class="inline-flex rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-400">Belum ada dokumen</span></dd></div></dl>
+                    <dl class="space-y-4 p-5">
+                        <div class="grid gap-2 sm:grid-cols-[150px_12px_minmax(0,1fr)] sm:gap-2"><dt class="text-xs font-medium text-slate-500 sm:py-2">Dokumen KTP</dt><span class="hidden py-2 text-sm text-slate-300 sm:block">:</span><dd><a v-if="employee.ktpPhotoUrl" :href="employee.ktpPhotoUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-[#0756ba] transition hover:bg-blue-100"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>Lihat Dokumen</a><span v-else class="inline-flex rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-400">Belum ada dokumen</span></dd></div>
+                        <div class="grid gap-2 sm:grid-cols-[150px_12px_minmax(0,1fr)] sm:gap-2"><dt class="text-xs font-medium text-slate-500 sm:py-2">Tanda Tangan</dt><span class="hidden py-2 text-sm text-slate-300 sm:block">:</span><dd><a v-if="employee.signaturePhotoUrl" :href="employee.signaturePhotoUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-[#0756ba] transition hover:bg-blue-100">Lihat Tanda Tangan</a><span v-else class="inline-flex rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-400">Belum ada tanda tangan</span></dd></div>
+                    </dl>
                 </section>
 
                 <section v-if="isSuperAdmin" class="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-[0_2px_8px_rgba(15,23,42,.04)] lg:col-span-2" data-testid="employee-account-section">

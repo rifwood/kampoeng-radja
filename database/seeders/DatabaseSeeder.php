@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call([
+            PenempatanSeeder::class,
             DevelopmentSeeder::class,
             ClosingEventMasterSeeder::class,
         ]);

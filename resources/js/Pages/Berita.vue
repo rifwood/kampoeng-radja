@@ -12,15 +12,8 @@ const props = defineProps({
 
 const search = ref('');
 
-const fallbackArticles = [
-    { id: 'fallback-1', title: '[FIGMA SEMENTARA] Festival Budaya Nusantara', description: 'Konten sementara ditampilkan sampai Media & Berita tersedia dari CMS.', tanggal_publish: '2024-10-12T00:00:00+07:00', foto_url: '/assets/figma/figma-news-1.png' },
-    { id: 'fallback-2', title: '[FIGMA SEMENTARA] Informasi Kampoeng Radja', description: 'Konten sementara ditampilkan sampai Media & Berita tersedia dari CMS.', tanggal_publish: '2024-10-05T00:00:00+07:00', foto_url: '/assets/figma/figma-news-2.png' },
-    { id: 'fallback-3', title: '[FIGMA SEMENTARA] Kabar Terbaru Kampoeng Radja', description: 'Konten sementara ditampilkan sampai Media & Berita tersedia dari CMS.', tanggal_publish: '2024-09-28T00:00:00+07:00', foto_url: '/assets/figma/figma-news-3.png' },
-];
-
-const displayedArticles = computed(() => props.articles.length ? props.articles : fallbackArticles);
-const featuredArticle = computed(() => displayedArticles.value[0]);
-const filteredArticles = computed(() => displayedArticles.value.filter((article) => {
+const featuredArticle = computed(() => props.articles[0] ?? null);
+const filteredArticles = computed(() => props.articles.filter((article) => {
     const keyword = search.value.trim().toLowerCase();
     return `${article.title} ${article.description}`.toLowerCase().includes(keyword);
 }));
@@ -56,7 +49,7 @@ const formatDate = (value) => new Intl.DateTimeFormat('id-ID', { dateStyle: 'med
             </section>
 
             <section class="mx-auto max-w-[1280px] px-6 py-12 lg:px-12 lg:py-16">
-                <article class="grid overflow-hidden rounded-3xl bg-white shadow-lg shadow-[#003f87]/10 lg:grid-cols-2">
+                <article v-if="featuredArticle" class="grid overflow-hidden rounded-3xl bg-white shadow-lg shadow-[#003f87]/10 lg:grid-cols-2">
                     <div class="relative min-h-[280px] overflow-hidden lg:min-h-[400px]"><img :src="featuredArticle.foto_url" :alt="featuredArticle.title" class="h-full w-full object-cover" /><div class="absolute inset-0 bg-gradient-to-t from-[#003f87]/40 to-transparent"></div><span class="absolute left-6 top-6 rounded-full bg-[#003f87] px-4 py-1.5 text-xs font-bold text-white">Berita Terbaru</span></div>
                     <div class="flex flex-col justify-center p-7 md:p-10"><p class="mb-4 flex items-center gap-2 text-sm font-bold text-[#727784]"><span class="material-symbols-outlined text-lg">calendar_month</span>{{ formatDate(featuredArticle.tanggal_publish) }}</p><h2 class="font-heading text-3xl font-extrabold leading-tight text-[#003f87]">{{ featuredArticle.title }}</h2><p class="mt-5 leading-relaxed text-[#424752]">{{ featuredArticle.description }}</p><a href="#daftar-berita" class="mt-7 flex w-fit items-center gap-2 rounded-xl bg-[#003f87] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#0056b3]">Lihat Berita Lainnya <span class="material-symbols-outlined text-lg">arrow_forward</span></a></div>
                 </article>

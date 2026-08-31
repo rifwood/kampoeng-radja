@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Employee;
 use App\Http\Controllers\Controller;
 use App\Models\Departemen;
 use App\Models\Jabatan;
+use App\Models\Penempatan;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,6 +19,7 @@ class EmployeeMasterController extends Controller
         return Inertia::render('Internal/Employee/Masters', [
             'jabatan' => Jabatan::query()->withCount('karyawan')->orderBy('nama_jabatan')->get(['id', 'nama_jabatan']),
             'departemen' => Departemen::query()->withCount('karyawan')->orderBy('nama_departemen')->get(['id', 'nama_departemen']),
+            'penempatan' => Penempatan::query()->withCount('karyawan')->orderBy('nama_penempatan')->get(['id', 'nama_penempatan']),
             'user' => [
                 'name' => $name,
                 'initials' => collect(preg_split('/\s+/', trim($name)))->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode(''),

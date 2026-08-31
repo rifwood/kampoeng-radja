@@ -4,6 +4,20 @@ Modul Kelola Karyawan - Kampoeng Radja
 
 Versi requirement terbaru berdasarkan keputusan yang telah disepakati
 
+## Baseline Organisasi Arif — 29 Agustus 2026
+
+Bagian ini menggantikan requirement organisasi/role lama yang masih muncul pada paragraf historis di bawah:
+
+- Role: Dirut, Direktur, dan Manajer → `super_admin`; SPV/Supervisor → `admin`; Marketing, Marcom, IT, Finance, Kasir, Operasional, General, dan Facility → `user`.
+- Jabatan `Staff` dibatalkan dan tidak dibuat otomatis.
+- Konsep `Posisi`, `posisi_id`, dan Master Posisi dibatalkan.
+- Master organisasi resmi: Jabatan, Departemen, dan Penempatan.
+- Jabatan wajib; Departemen dan Penempatan nullable.
+- Karyawan dapat memiliki Atasan Langsung nullable yang mereferensikan Karyawan lain dan tidak boleh mereferensikan diri sendiri.
+- Karyawan dapat memiliki Foto Tanda Tangan berupa file path; bukan base64.
+- Export Karyawan memuat Penempatan dan Atasan Langsung, tetapi tidak memuat Foto Tanda Tangan.
+- KPI/Daily Report/evaluasi KPI tidak termasuk scope dan tidak diimplementasikan.
+
 1. Ringkasan Modul
 
 Modul Kelola Karyawan merupakan modul internal untuk pengelolaan master data karyawan, jabatan, departemen, dan akun pengguna. Akses penuh hanya dimiliki oleh Super Admin. Admin dan User hanya memiliki menu Data Karyawan dengan hak baca terbatas pada atribut yang telah ditentukan.
@@ -393,7 +407,7 @@ Departemen yang masih digunakan oleh karyawan tidak boleh dihapus tanpa penangan
 
 Admin dan User hanya memiliki akses baca, tetapi keduanya dapat melihat seluruh karyawan dari seluruh departemen.
 
-List dan Detail menampilkan 12 atribut umum pada bagian 5.1. Atribut sensitif pada bagian 5.2 tidak boleh diserialisasi ke Inertia props Admin/User. Admin dan User tidak memperoleh aksi tambah, edit, hapus, account management, Foto KTP, atau akses master Jabatan & Departemen.
+List dan Detail menampilkan atribut umum pada bagian 5.1 beserta Penempatan dan Atasan Langsung. Atribut sensitif pada bagian 5.2 tidak boleh diserialisasi ke Inertia props Admin/User. Admin dan User tidak memperoleh aksi tambah, edit, hapus, account management, Foto KTP, Foto Tanda Tangan, atau akses Master Organisasi.
 
 12. Pembuatan dan Pengelolaan Akun Karyawan
 
@@ -407,7 +421,7 @@ Sistem mengikat akun ke karyawan_id yang dipilih.
 
 Super Admin menentukan username yang unik.
 
-Role akun ditentukan sesuai aturan jabatan: Dirut/Direktur/Admin Sistem = super_admin; Manajer/Supervisor = admin; Mitra/Operasional/Facility = user.
+Role akun ditentukan sesuai baseline terbaru: Dirut/Direktur/Manajer = super_admin; SPV/Supervisor = admin; Marketing/Marcom/IT/Finance/Kasir/Operasional/General/Facility = user.
 
 Super Admin membuat PIN awal sementara 6 digit dan melakukan konfirmasi PIN.
 
@@ -471,27 +485,19 @@ Direktur
 
 super_admin
 
-Admin Sistem
+Manajer
 
 super_admin
 
-Manajer
+SPV / Supervisor
 
 admin
 
-Supervisor
-
-admin
-
-Mitra
+Marketing / Marcom / IT / Finance / Kasir
 
 user
 
-Operasional (OPS)
-
-user
-
-Facility (FLT)
+Operasional / General / Facility
 
 user
 

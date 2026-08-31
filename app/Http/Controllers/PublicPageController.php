@@ -7,6 +7,7 @@ use App\Models\GaleriEvent;
 use App\Models\HomeHero;
 use App\Models\MediaBerita;
 use App\Models\Mitra;
+use App\Models\Produk;
 use App\Models\Wahana;
 use App\Support\WhatsAppNumber;
 use Carbon\CarbonImmutable;
@@ -23,7 +24,8 @@ class PublicPageController extends Controller
         return Inertia::render('Home', [
             'hero' => $this->formatHomeHero(HomeHero::query()->first()),
             'news' => MediaBerita::query()
-                ->latest('tanggal_publish')
+                ->orderByDesc('tanggal_publish')
+                ->orderByDesc('id')
                 ->take(3)
                 ->get()
                 ->map(fn (MediaBerita $item): array => $this->formatMediaBerita($item)),
@@ -36,17 +38,38 @@ class PublicPageController extends Controller
                 ->get()
                 ->map(fn (EventPromo $item): array => $this->formatEventPromo($item)),
             'promotionFallbackEnabled' => ! EventPromo::query()->exists(),
-            'partners' => Mitra::query()->where('is_active', true)->orderBy('nama_brand')->get()
-                ->map(fn (Mitra $mitra) => ['id' => $mitra->id, 'name' => $mitra->nama_brand, 'logo' => $mitra->logo]),
+            'products' => Produk::query()
+                ->where('is_active', true)
+                ->orderBy('urutan_tampil')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (Produk $produk): array => [
+                    'id' => $produk->id,
+                    'name' => $produk->nama,
+                    'description' => $produk->deskripsi_singkat,
+                    'detail' => $produk->deskripsi_lengkap,
+                    'thumbnail' => Storage::disk('public')->url($produk->thumbnail),
+                    'heroImage' => Storage::disk('public')->url($produk->hero_image),
+                ]),
+            'partners' => Mitra::query()
+                ->where('is_active', true)
+                ->orderBy('urutan_tampil')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (Mitra $mitra): array => [
+                    'id' => $mitra->id,
+                    'name' => $mitra->nama_brand,
+                    'logo' => Storage::disk('public')->url($mitra->logo),
+                ]),
             'featuredRides' => Wahana::query()
-                ->with(['fotos' => fn ($query) => $query->orderBy('urutan')->orderBy('id')])
+                ->with('coverFoto')
                 ->where('is_active', true)
                 ->where('is_unggulan', true)
                 ->orderBy('urutan_tampil')
                 ->orderBy('id')
                 ->take(3)
                 ->get()
-                ->map(fn (Wahana $wahana) => $this->formatWahana($wahana)),
+                ->map(fn (Wahana $wahana) => $this->formatFeaturedWahana($wahana)),
             'featuredRideFallbackEnabled' => ! Wahana::query()->exists(),
         ]);
     }
@@ -64,14 +87,6 @@ class PublicPageController extends Controller
             'id' => $hero->id,
             'video_url' => $hero->video_path ? Storage::disk('public')->url($hero->video_path) : null,
             'poster_url' => $hero->poster_path ? Storage::disk('public')->url($hero->poster_path) : null,
-            'eyebrow' => $hero->eyebrow,
-            'judul' => $hero->judul,
-            'tagline' => $hero->tagline,
-            'deskripsi' => $hero->deskripsi,
-            'cta_primary_label' => $hero->cta_primary_label,
-            'cta_primary_url' => $hero->cta_primary_url,
-            'cta_secondary_label' => $hero->cta_secondary_label,
-            'cta_secondary_url' => $hero->cta_secondary_url,
         ];
     }
 
@@ -84,7 +99,8 @@ class PublicPageController extends Controller
     {
         return Inertia::render('Berita', [
             'articles' => MediaBerita::query()
-                ->latest('tanggal_publish')
+                ->orderByDesc('tanggal_publish')
+                ->orderByDesc('id')
                 ->get()
                 ->map(fn (MediaBerita $item): array => $this->formatMediaBerita($item)),
         ]);
@@ -160,6 +176,26 @@ class PublicPageController extends Controller
             'description' => $wahana->deskripsi_singkat,
             'cover_url' => $photos->first()['url'],
             'photos' => $photos,
+            'alt_text' => $wahana->nama_wahana,
+            'labels' => $labels,
+        ];
+    }
+
+    private function formatFeaturedWahana(Wahana $wahana): array
+    {
+        $labels = collect($wahana->labels())
+            ->map(fn (string $label, int $index): array => [
+                'id' => $wahana->id.'-'.$index,
+                'name' => $label,
+                'slug' => str($label)->slug()->toString(),
+            ]);
+        $coverPath = $wahana->coverFoto?->foto ?: $wahana->foto;
+
+        return [
+            'id' => $wahana->id,
+            'title' => $wahana->nama_wahana,
+            'description' => $wahana->deskripsi_singkat,
+            'cover_url' => $coverPath ? Storage::disk('public')->url($coverPath) : null,
             'alt_text' => $wahana->nama_wahana,
             'labels' => $labels,
         ];

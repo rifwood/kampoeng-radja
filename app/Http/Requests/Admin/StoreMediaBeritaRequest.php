@@ -18,7 +18,7 @@ class StoreMediaBeritaRequest extends FormRequest
     {
         return [
             'judul' => ['required', 'string', 'max:150'],
-            'deskripsi' => ['required', 'string'],
+            'deskripsi' => ['required', 'string', 'max:250'],
             'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'tanggal_publish' => ['required', 'date'],
         ];

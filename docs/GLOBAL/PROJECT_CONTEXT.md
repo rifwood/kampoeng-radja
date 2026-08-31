@@ -129,15 +129,17 @@ Pada fase selanjutnya, proyek akan menyediakan sistem internal untuk membantu pe
 
 Struktur jabatan perusahaan secara umum:
 
-**Dirut → Direktur → Manager → Supervisor (SPV) → Mitra → Ops → FLT / Facility**
+**Dirut → Direktur → Manajer → SPV → kelompok operasional**
 
 Untuk kebutuhan sistem digital, jabatan dapat dipetakan menjadi tiga kelompok akses utama.
 
 | Role Sistem | Jabatan Terkait | Cakupan Umum |
 |---|---|---|
-| **Super Admin** | Dirut, Direktur, Super Admin Sistem | Akses penuh terhadap sistem dan konfigurasi yang diizinkan |
-| **Admin** | Manager, Supervisor / SPV | Pengelolaan data, tim, atau konten sesuai kewenangan |
-| **User** | Mitra, Ops, FLT / Facility | Akses terhadap fitur operasional yang relevan dengan tugas masing-masing |
+| **Super Admin** | Dirut, Direktur, Manajer | Akses penuh terhadap sistem dan konfigurasi yang diizinkan |
+| **Admin** | SPV / Supervisor | Pengelolaan data, tim, atau konten sesuai kewenangan |
+| **User** | Marketing, Marcom, IT, Finance, Kasir, Operasional, General, Facility | Akses terhadap fitur operasional yang relevan dengan tugas masing-masing |
+
+Fondasi organisasi menggunakan Jabatan (wajib), Departemen (nullable), Penempatan (nullable), Atasan Langsung berupa referensi Karyawan, dan Foto Tanda Tangan berupa file path. Konsep `Staff` otomatis dan Master `Posisi` dibatalkan. KPI belum aktif dan tidak diimplementasikan.
 
 Role di atas hanya merupakan **pemetaan global**.
 

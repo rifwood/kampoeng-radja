@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Wahana extends Model
 {
@@ -57,5 +58,13 @@ class Wahana extends Model
         return $this->hasMany(WahanaFoto::class)
             ->orderBy('urutan')
             ->orderBy('id');
+    }
+
+    public function coverFoto(): HasOne
+    {
+        return $this->hasOne(WahanaFoto::class)->ofMany([
+            'urutan' => 'min',
+            'id' => 'min',
+        ]);
     }
 }

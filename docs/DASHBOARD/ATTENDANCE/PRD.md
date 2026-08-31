@@ -98,7 +98,11 @@ Tidak membuat tabel Absensi baru.
 - Jika status berubah dari H ke I/A, backend wajib membersihkan kedua jam.
 - Jika kedua jam terisi, jam keluar tidak boleh lebih awal dari jam masuk.
 - Jam masuk maksimal `12:00`; nilai setelahnya ditolak dengan pesan validasi yang jelas.
-- Hadir dengan jam masuk setelah `08:30` dihitung sebagai Terlambat. Nilai `08:30` masih tepat waktu.
+- Hari Normal memakai target masuk `08:30` dan toleransi 10 menit: sampai `08:30` Tepat Waktu, `08:31`–`08:40` Dalam Toleransi, setelah `08:40` Terlambat.
+- Tanggal tanpa konfigurasi khusus otomatis dianggap Hari Normal dan tidak membutuhkan record konfigurasi harian.
+- Hari Event dapat memiliki beberapa jadwal Panitia. Setiap jadwal memakai jam masuk fleksibel dan toleransi tetap 5 menit.
+- Hanya karyawan yang dipilih sebagai Panitia yang memakai jadwal Event; karyawan lain tetap memakai aturan Hari Normal.
+- Satu karyawan hanya boleh berada pada satu jadwal Panitia dalam tanggal Event yang sama.
 - Hadir dengan jam keluar sebelum `16:30` dihitung sebagai Pulang Lebih Awal. Nilai `16:30` sudah normal.
 - Terlambat dan Pulang Lebih Awal dihitung dari nilai jam saat dibutuhkan dan tidak disimpan sebagai kolom database.
 - Jam yang masih NULL tidak menghasilkan status Terlambat/Pulang Lebih Awal.
@@ -166,7 +170,7 @@ Kolom `Rekap Bulanan`:
 - Total Terlambat
 - Total Pulang Awal
 
-Total Terlambat menghitung record H dengan jam masuk setelah `08:30`. Total Pulang Awal menghitung record H dengan jam keluar sebelum `16:30`. Jam NULL serta status I/A tidak dihitung pada kedua total tersebut.
+Total Terlambat menghitung record H yang melewati target beserta toleransinya: aturan Normal `08:30 + 10 menit`, atau jadwal Panitia Event `+ 5 menit`. Total Pulang Awal menghitung record H dengan jam keluar sebelum `16:30`. Jam NULL serta status I/A tidak dihitung pada kedua total tersebut.
 
 Isi setiap sheet harian:
 

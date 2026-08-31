@@ -91,6 +91,7 @@ Pengguna yang tidak memiliki akses tidak boleh memperoleh data Closing Event dar
 | SPV Marcom | Supervisor | Marcom | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | SPV Marketing | Supervisor | Marketing | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | Karyawan Marketing | Selain kelompok di atas | Marketing | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Role User | Semua jabatan/departemen | Semua | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Karyawan lainnya | Selain yang disebut di atas | Selain ketentuan di atas | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### 5.1 Ketentuan penting
@@ -101,6 +102,7 @@ Pengguna yang tidak memiliki akses tidak boleh memperoleh data Closing Event dar
 - Karyawan biasa departemen Marketing memperoleh akses lihat, detail, dan input, tetapi tidak dapat edit atau hapus.
 - Karyawan biasa departemen Marcom tidak otomatis memperoleh akses.
 - Pengguna lain yang tidak termasuk kelompok di atas tidak memperoleh akses sama sekali.
+- Pengguna dengan role global `user` memperoleh akses company-wide untuk daftar dan detail Closing Event secara read-only, tanpa Create, Update, Delete, Export, atau pengelolaan Master.
 
 ### 5.2 Role global tidak berubah
 
@@ -135,7 +137,8 @@ Sistem sebaiknya mengevaluasi capability berikut:
 3. Supervisor + Marcom → View, Create, Detail, Update, Export.
 4. Supervisor + Marketing → View, Create, Detail, Update, Export.
 5. Karyawan lainnya + Marketing → View, Create, Detail, Export.
-6. Selain itu → tidak memiliki capability Closing Event.
+6. Role global User → View dan Detail saja.
+7. Selain itu → tidak memiliki capability Closing Event.
 
 ---
 

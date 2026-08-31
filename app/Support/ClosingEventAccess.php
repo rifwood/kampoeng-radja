@@ -33,6 +33,10 @@ class ClosingEventAccess
             return ['canView' => true, 'canCreate' => true, 'canUpdate' => true, 'canDelete' => true, 'canExport' => true, 'canManageMaster' => true];
         }
 
+        if ($role === 'user') {
+            return ['canView' => true, 'canCreate' => false, 'canUpdate' => false, 'canDelete' => false, 'canExport' => false, 'canManageMaster' => false];
+        }
+
         if (in_array($position, ['manajer', 'manager'], true)) {
             return ['canView' => true, 'canCreate' => true, 'canUpdate' => true, 'canDelete' => false, 'canExport' => true, 'canManageMaster' => false];
         }

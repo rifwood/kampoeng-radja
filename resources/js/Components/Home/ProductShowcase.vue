@@ -1,70 +1,20 @@
 <script setup>
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
-const products = [
-  {
-    id: 'outing-class',
-    name: 'Outing Class',
-    thumbnail: '/assets/products/temp/outing-class-temp.png',
-    heroImage: '/assets/products/temp/outing-class-hero-temp.png',
-    heroMode: 'cover',
-  },
-  {
-    id: 'paket-arisan',
-    name: 'Paket Arisan',
-    thumbnail: '/assets/products/temp/paket-arisan-temp.png',
-    heroImage: '/assets/products/temp/paket-arisan-temp.png',
-    heroMode: 'contain',
-  },
-  {
-    id: 'paket-birthday',
-    name: 'Paket Birthday',
-    thumbnail: '/assets/products/temp/paket-birthday-temp.png',
-    heroImage: '/assets/products/temp/paket-birthday-temp.png',
-    heroMode: 'contain',
-  },
-  {
-    id: 'wisata-edukasi',
-    name: 'Wisata Edukasi',
-    thumbnail: '/assets/products/temp/wisata-edukasi-temp.png',
-    heroImage: '/assets/products/temp/wisata-edukasi-temp.png',
-    heroMode: 'contain',
-  },
-  {
-    id: 'tenda-panggung',
-    name: 'Tenda Panggung',
-    thumbnail: '/assets/products/temp/tenda-panggung-temp.png',
-    heroImage: '/assets/products/temp/tenda-panggung-temp.png',
-    heroMode: 'contain',
-  },
-  {
-    id: 'istana-balon',
-    name: 'Istana Balon',
-    thumbnail: '/assets/products/temp/istana-balon-temp.png',
-    heroImage: '/assets/products/temp/istana-balon-temp.png',
-    heroMode: 'contain',
-  },
-  {
-    id: 'lantai-multimedia',
-    name: 'Lantai Multimedia',
-    thumbnail: '/assets/products/temp/lantai-multimedia-temp.png',
-    heroImage: '/assets/products/temp/lantai-multimedia-temp.png',
-    heroMode: 'contain',
-  },
-  {
-    id: 'paket-fasilitator',
-    name: 'Paket Fasilitator',
-    thumbnail: '/assets/products/temp/paket-fasilitator-temp.png',
-    heroImage: '/assets/products/temp/paket-fasilitator-temp.png',
-    heroMode: 'contain',
-  },
-];
+const props = defineProps({
+  products: { type: Array, default: () => [] },
+});
+
+const products = computed(() => props.products);
 
 const activeIndex = ref(0);
+const sectionRoot = ref(null);
+const mediaReady = ref(false);
+let sectionObserver = null;
 const transitionDirection = ref(1);
 const thumbnailTrack = ref(null);
-const activeProduct = computed(() => products[activeIndex.value]);
-const activeHeroImage = computed(() => activeProduct.value.heroImage || activeProduct.value.thumbnail);
+const activeProduct = computed(() => props.products[activeIndex.value] ?? null);
+const activeHeroImage = computed(() => mediaReady.value ? (activeProduct.value?.heroImage || activeProduct.value?.thumbnail || '') : '');
 const transitionName = computed(() => transitionDirection.value > 0 ? 'product-next' : 'product-previous');
 
 const revealThumbnail = async (index) => {
@@ -82,7 +32,8 @@ const selectProduct = (index, direction = null) => {
 };
 
 const moveProduct = (direction) => {
-  const nextIndex = (activeIndex.value + direction + products.length) % products.length;
+  if (props.products.length <= 1) return;
+  const nextIndex = (activeIndex.value + direction + props.products.length) % props.products.length;
   selectProduct(nextIndex, direction);
 };
 
@@ -95,10 +46,27 @@ const moveThumbnails = (direction) => {
     behavior: 'smooth',
   });
 };
+
+onMounted(() => {
+  if (!('IntersectionObserver' in window)) {
+    mediaReady.value = true;
+    return;
+  }
+
+  sectionObserver = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) return;
+    mediaReady.value = true;
+    sectionObserver?.disconnect();
+  }, { rootMargin: '350px 0px' });
+  sectionObserver.observe(sectionRoot.value);
+});
+
+onBeforeUnmount(() => sectionObserver?.disconnect());
 </script>
 
 <template>
   <div
+    ref="sectionRoot"
     class="product-showcase overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_78%,#eef5ff_100%)] px-5 pb-9 pt-16 sm:pb-10 sm:pt-20 lg:px-0 lg:pb-10 lg:pt-24"
     role="region"
     aria-labelledby="product-showcase-title"
@@ -116,7 +84,7 @@ const moveThumbnails = (direction) => {
         </p>
       </header>
 
-      <div class="relative mt-10 sm:px-14 lg:mt-12 lg:px-16">
+      <div v-if="activeProduct" class="relative mt-10 sm:px-14 lg:mt-12 lg:px-16">
         <button
           type="button"
           class="product-nav absolute left-0 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[#d8e2ef] bg-white text-xl font-bold text-[#075ac2] shadow-[0_8px_24px_rgba(17,61,113,.14)] transition hover:-translate-y-[54%] hover:border-[#075ac2] hover:bg-[#075ac2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60 sm:grid"
@@ -132,21 +100,12 @@ const moveThumbnails = (direction) => {
               :key="activeProduct.id"
               class="absolute inset-0 h-full w-full overflow-hidden"
             >
-              <template v-if="activeProduct.heroMode === 'contain'">
-                <img
-                  :src="activeHeroImage"
-                  alt=""
-                  aria-hidden="true"
-                  class="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-2xl"
-                />
-                <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(238,247,255,.58),rgba(255,255,255,.3),rgba(238,247,255,.58))]"></div>
-              </template>
-
               <img
+                v-if="activeHeroImage"
                 :src="activeHeroImage"
                 :alt="`Produk ${activeProduct.name}`"
-                :class="activeProduct.heroMode === 'cover' ? 'object-cover' : 'object-contain px-4 py-3 sm:px-8 sm:py-5'"
-                class="relative z-10 h-full w-full"
+                class="relative z-10 h-full w-full object-contain"
+                decoding="async"
               />
             </div>
           </Transition>
@@ -169,7 +128,7 @@ const moveThumbnails = (direction) => {
         </div>
       </div>
 
-      <div class="relative mt-7 px-10 sm:px-12">
+      <div v-if="products.length" class="relative mt-7 px-10 sm:px-12">
         <button
           type="button"
           class="absolute left-0 top-[72px] z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-[#d8e2ef] bg-white font-bold text-[#075ac2] shadow-md transition hover:border-[#075ac2] hover:bg-[#075ac2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60"
@@ -191,7 +150,7 @@ const moveThumbnails = (direction) => {
             :aria-label="`Tampilkan produk ${product.name}`"
             @click="selectProduct(index)"
           >
-            <img :src="product.thumbnail" alt="" class="aspect-[4/5] w-full rounded-[11px] object-cover" loading="lazy" />
+            <img :src="mediaReady ? product.thumbnail : undefined" alt="" class="aspect-[4/5] w-full rounded-[11px] bg-slate-100 object-cover" loading="lazy" decoding="async" />
             <span class="mt-2 block truncate px-1 text-[11px] font-semibold leading-4 text-[#46556a] group-hover:text-[#075ac2]">{{ product.name }}</span>
           </button>
         </div>
@@ -204,6 +163,10 @@ const moveThumbnails = (direction) => {
         >
           →
         </button>
+      </div>
+
+      <div v-else class="mt-10 rounded-2xl border border-dashed border-[#cddcf0] bg-white/70 px-6 py-14 text-center text-sm text-[#596273]">
+        Belum ada Produk yang ditampilkan.
       </div>
 
       <!-- TODO: arahkan ke halaman Produk setelah requirement route dan CMS disetujui. -->

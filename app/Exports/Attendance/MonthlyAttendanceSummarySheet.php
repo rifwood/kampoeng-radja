@@ -3,6 +3,8 @@
 namespace App\Exports\Attendance;
 
 use App\Models\Absensi;
+use App\Models\AttendanceDay;
+use App\Support\AttendanceTimeliness;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
@@ -19,7 +21,10 @@ class MonthlyAttendanceSummarySheet implements FromArray, WithColumnWidths, With
     /**
      * @param  Collection<int, Absensi>  $records
      */
-    public function __construct(private readonly Collection $records) {}
+    public function __construct(
+        private readonly Collection $records,
+        private readonly Collection $attendanceDays,
+    ) {}
 
     /**
      * @return list<array<int, int|string>>
@@ -143,9 +148,17 @@ class MonthlyAttendanceSummarySheet implements FromArray, WithColumnWidths, With
 
     private function isLate(Absensi $record): bool
     {
-        return $record->status_kehadiran === 'H'
-            && $record->jam_masuk !== null
-            && substr($record->jam_masuk, 0, 5) > '08:30';
+        $timeliness = app(AttendanceTimeliness::class);
+        /** @var AttendanceDay|null $day */
+        $day = $this->attendanceDays->get($record->tanggal_absensi->toDateString());
+        $schedule = $timeliness->scheduleFor($day, $record->karyawan_id);
+
+        return $timeliness->calculate(
+            $record->status_kehadiran,
+            $record->jam_masuk,
+            $schedule['expectedTime'],
+            $schedule['toleranceMinutes'],
+        ) === 'late';
     }
 
     private function isEarlyLeave(Absensi $record): bool

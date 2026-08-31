@@ -2,6 +2,7 @@
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import AttendanceTimeInput from '@/Components/Internal/AttendanceTimeInput.vue';
+import AttendanceEventDayModal from '@/Components/Internal/AttendanceEventDayModal.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
@@ -13,6 +14,7 @@ const props = defineProps({
     canMutateDate: { type: Boolean, required: true },
     isSaved: { type: Boolean, required: true },
     employees: { type: Array, required: true },
+    attendanceDay: { type: Object, required: true },
     permissions: { type: Object, required: true },
     reportYears: { type: Array, required: true },
     user: { type: Object, required: true },
@@ -21,6 +23,8 @@ const props = defineProps({
 const page = usePage();
 const isEditing = ref(props.permissions.canManage && !props.isSaved && props.canMutateDate);
 const bulkConfirmationOpen = ref(false);
+const eventDayModalOpen = ref(false);
+const normalDayConfirmationOpen = ref(false);
 const searchQuery = ref('');
 const reportPeriod = ref(props.today.slice(0, 7));
 const months = [
@@ -92,6 +96,21 @@ const statusClasses = {
     I: 'bg-amber-50 text-amber-700',
     A: 'bg-rose-50 text-rose-700',
 };
+const timelinessLabels = {
+    on_time: 'Tepat Waktu',
+    within_tolerance: 'Dalam Toleransi',
+    late: 'Terlambat',
+};
+const timelinessClasses = {
+    on_time: 'text-blue-700',
+    within_tolerance: 'text-orange-700',
+    late: 'text-red-700',
+};
+const timelinessRowClasses = {
+    on_time: 'bg-blue-50/70 hover:bg-blue-100/60',
+    within_tolerance: 'bg-orange-50/80 hover:bg-orange-100/60',
+    late: 'bg-red-50/80 hover:bg-red-100/60',
+};
 
 const recordFor = (employeeId) => recordByEmployee.value.get(employeeId);
 const recordIndex = (employeeId) => form.records.findIndex((record) => record.karyawan_id === employeeId);
@@ -127,10 +146,20 @@ const navigateTimeRow = (employeeId, field, direction) => {
     const employee = nextPresentEmployee(employeeId, direction);
     if (employee) focusTimeInput(employee.id, field);
 };
-const isLate = (record) => record.status_kehadiran === 'H'
-    && timePattern.test(record.jam_masuk)
-    && record.jam_masuk > '08:30'
-    && record.jam_masuk <= '12:00';
+const minutesFromTime = (time) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return (hours * 60) + minutes;
+};
+const timelinessFor = (employee) => {
+    const record = recordFor(employee.id);
+    if (record?.status_kehadiran !== 'H' || !timePattern.test(record.jam_masuk)) return null;
+
+    const actual = minutesFromTime(record.jam_masuk);
+    const expected = minutesFromTime(employee.scheduledTime);
+    if (actual <= expected) return 'on_time';
+    if (actual <= expected + employee.toleranceMinutes) return 'within_tolerance';
+    return 'late';
+};
 const isEarlyLeave = (record) => record.status_kehadiran === 'H'
     && timePattern.test(record.jam_keluar)
     && record.jam_keluar < '16:30';
@@ -175,6 +204,13 @@ const openDate = (event) => {
 const openQuickDate = (date) => {
     router.get(route('admin.absensi.index'), { tanggal: date });
 };
+const changeToNormalDay = () => {
+    router.delete(route('admin.absensi.event-day.destroy'), {
+        data: { tanggal: props.attendanceDate },
+        preserveScroll: true,
+        onSuccess: () => { normalDayConfirmationOpen.value = false; },
+    });
+};
 
 watch(() => props.attendanceDate, () => {
     form.tanggal_absensi = props.attendanceDate;
@@ -182,6 +218,8 @@ watch(() => props.attendanceDate, () => {
     originalRecords.value = JSON.parse(JSON.stringify(form.records));
     form.clearErrors();
     bulkConfirmationOpen.value = false;
+    eventDayModalOpen.value = false;
+    normalDayConfirmationOpen.value = false;
     isEditing.value = props.permissions.canManage && !props.isSaved && props.canMutateDate;
 });
 
@@ -231,6 +269,19 @@ watch(() => props.isSaved, (saved) => {
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h2 class="font-heading text-lg font-bold text-[#0f172a]">{{ formattedDate }}</h2>
+                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                            <span
+                                :class="attendanceDay.type === 'event' ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-slate-200 bg-slate-50 text-slate-600'"
+                                class="inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
+                            >
+                                {{ attendanceDay.type === 'event' ? 'Hari Event' : 'Hari Normal' }}
+                            </span>
+                            <template v-if="attendanceDay.type === 'event'">
+                                <span class="text-sm font-semibold text-slate-800">{{ attendanceDay.eventName }}</span>
+                                <span class="text-xs text-slate-500">{{ attendanceDay.scheduleCount }} Jadwal · {{ attendanceDay.committeeCount }} Panitia</span>
+                            </template>
+                            <span v-else class="text-xs text-slate-500">Target 08:30 · Toleransi 10 menit</span>
+                        </div>
                         <p
                             :class="canMutateDate && permissions.canManage ? 'text-emerald-700' : 'text-slate-500'"
                             class="mt-1.5 flex items-center gap-2 text-xs font-semibold"
@@ -253,6 +304,30 @@ watch(() => props.isSaved, (saved) => {
                     >
                         {{ missingSelectionCount > 0 ? `${missingSelectionCount} karyawan belum diisi` : 'Semua absensi sudah lengkap ✓' }}
                     </p>
+                </div>
+
+                <div v-if="permissions.canManage && canMutateDate" class="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-700">Mode Kehadiran</p>
+                        <p class="mt-1 text-xs text-slate-500">Hari Event hanya mengubah target masuk karyawan yang dipilih sebagai panitia.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            class="h-9 rounded-lg border border-[#2867e8] px-4 text-xs font-semibold text-[#0756ba] transition hover:bg-blue-50"
+                            @click="eventDayModalOpen = true"
+                        >
+                            {{ attendanceDay.type === 'event' ? 'Atur Jadwal Panitia' : 'Jadikan Hari Event' }}
+                        </button>
+                        <button
+                            v-if="attendanceDay.type === 'event'"
+                            type="button"
+                            class="h-9 rounded-lg border border-slate-300 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                            @click="normalDayConfirmationOpen = true"
+                        >
+                            Ubah ke Hari Normal
+                        </button>
+                    </div>
                 </div>
 
                 <div
@@ -374,15 +449,18 @@ watch(() => props.isSaved, (saved) => {
                     </label>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-[1180px] table-fixed border-collapse text-left">
+                    <table class="w-full min-w-[1500px] table-fixed border-collapse text-left">
                         <colgroup>
+                            <col class="w-[8%]">
+                            <col class="w-[15%]">
+                            <col class="w-[12%]">
                             <col class="w-[10%]">
-                            <col class="w-[19%]">
-                            <col class="w-[16%]">
-                            <col class="w-[14%]">
-                            <col class="w-[12%]">
-                            <col class="w-[12%]">
-                            <col class="w-[17%]">
+                            <col class="w-[8%]">
+                            <col class="w-[8%]">
+                            <col class="w-[10%]">
+                            <col class="w-[11%]">
+                            <col class="w-[9%]">
+                            <col class="w-[15%]">
                         </colgroup>
                         <thead class="bg-[#f1f4f8] text-[10px] font-bold uppercase tracking-wide text-[#334155]">
                             <tr>
@@ -390,13 +468,21 @@ watch(() => props.isSaved, (saved) => {
                                 <th class="px-3 py-3">Nama Karyawan</th>
                                 <th class="px-3 py-3">Jabatan</th>
                                 <th class="px-3 py-3">Kehadiran</th>
+                                <th class="px-3 py-3">Jenis</th>
+                                <th class="px-3 py-3">Jadwal Masuk</th>
                                 <th class="px-3 py-3">Jam Masuk</th>
+                                <th class="px-3 py-3">Ketepatan</th>
                                 <th class="px-3 py-3">Jam Keluar</th>
                                 <th class="px-3 py-3">Keterangan</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#e2e8f0] text-xs">
-                            <tr v-for="employee in filteredEmployees" :key="employee.id" class="min-h-[62px] hover:bg-slate-50/60">
+                            <tr
+                                v-for="employee in filteredEmployees"
+                                :key="employee.id"
+                                :class="timelinessRowClasses[timelinessFor(employee)] || 'hover:bg-slate-50/60'"
+                                class="min-h-[62px] transition-colors"
+                            >
                                 <td class="whitespace-nowrap px-3 py-3 align-middle font-medium text-slate-500">{{ compactDate }}</td>
                                 <td class="px-3 py-3 align-middle">
                                     <div class="flex items-center gap-2.5">
@@ -436,6 +522,18 @@ watch(() => props.isSaved, (saved) => {
                                     <span v-else class="text-slate-400">-</span>
                                     <p v-if="fieldError(employee.id, 'status_kehadiran')" class="mt-1 text-[10px] text-red-600">Pilih H, I, atau A.</p>
                                 </td>
+                                <td class="px-3 py-3 align-middle">
+                                    <span
+                                        :class="employee.scheduleType === 'committee' ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-slate-200 bg-slate-50 text-slate-600'"
+                                        class="inline-flex rounded-full border px-2 py-1 text-[10px] font-bold"
+                                    >
+                                        {{ employee.scheduleType === 'committee' ? 'PANITIA' : 'NORMAL' }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 align-middle font-semibold tabular-nums text-slate-700">
+                                    {{ employee.scheduledTime }}
+                                    <span class="block text-[9px] font-medium text-slate-400">+{{ employee.toleranceMinutes }} menit</span>
+                                </td>
                                 <td class="px-3 py-3 align-top">
                                     <AttendanceTimeInput
                                         v-if="isEditing"
@@ -445,12 +543,21 @@ watch(() => props.isSaved, (saved) => {
                                         :label="`Jam Masuk ${employee.name}`"
                                         :error="fieldError(employee.id, 'jam_masuk')"
                                         max-time="12:00"
-                                        :indicator="isLate(recordFor(employee.id)) ? 'Terlambat' : ''"
                                         @update:model-value="clearFieldError(employee.id, 'jam_masuk')"
                                         @navigate-next="navigateNextTimeInput(employee.id, 'jam_masuk')"
                                         @navigate-row="navigateTimeRow(employee.id, 'jam_masuk', $event)"
                                     />
                                     <span v-else class="tabular-nums text-slate-600">{{ recordFor(employee.id).jam_masuk || '-' }}</span>
+                                </td>
+                                <td class="px-3 py-3 align-middle">
+                                    <span
+                                        v-if="timelinessFor(employee)"
+                                        :class="timelinessClasses[timelinessFor(employee)]"
+                                        class="whitespace-nowrap text-[10px] font-bold"
+                                    >
+                                        {{ timelinessLabels[timelinessFor(employee)] }}
+                                    </span>
+                                    <span v-else class="text-slate-400">-</span>
                                 </td>
                                 <td class="px-3 py-3 align-top">
                                     <AttendanceTimeInput
@@ -484,7 +591,7 @@ watch(() => props.isSaved, (saved) => {
                                 </td>
                             </tr>
                             <tr v-if="!filteredEmployees.length">
-                                <td colspan="7" class="px-5 py-16 text-center text-sm text-slate-500">
+                                <td colspan="10" class="px-5 py-16 text-center text-sm text-slate-500">
                                     Tidak ada karyawan yang sesuai pencarian.
                                 </td>
                             </tr>
@@ -521,6 +628,25 @@ watch(() => props.isSaved, (saved) => {
                         >
                             Ya, Isi
                         </button>
+                    </div>
+                </div>
+            </Modal>
+
+            <AttendanceEventDayModal
+                :show="eventDayModalOpen"
+                :attendance-date="attendanceDate"
+                :attendance-day="attendanceDay"
+                :employees="employees"
+                @close="eventDayModalOpen = false"
+            />
+
+            <Modal :show="normalDayConfirmationOpen" max-width="sm" @close="normalDayConfirmationOpen = false">
+                <div class="p-5 sm:p-6">
+                    <h3 class="font-heading text-base font-bold text-slate-900">Ubah menjadi Hari Normal?</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-500">Konfigurasi jadwal Panitia Event pada tanggal ini tidak akan digunakan lagi. Record Absensi yang sudah ada tetap dipertahankan.</p>
+                    <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <button type="button" class="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50" @click="normalDayConfirmationOpen = false">Batal</button>
+                        <button type="button" class="h-10 rounded-lg bg-[#0756ba] px-5 text-sm font-semibold text-white hover:bg-[#064ca3]" @click="changeToNormalDay">Ubah ke Hari Normal</button>
                     </div>
                 </div>
             </Modal>

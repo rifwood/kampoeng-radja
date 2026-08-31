@@ -67,7 +67,7 @@ watch(cmsRouteActive, (active) => {
                     </button>
                     <div v-show="employeeExpanded" id="employee-navigation" class="ml-6 mt-1 space-y-1 border-l border-slate-200 pl-3">
                         <Link :href="route('dashboard.karyawan.index')" :class="route().current('dashboard.karyawan.*') ? 'bg-[#2867e8] text-white shadow-sm' : 'text-[#64748b] hover:bg-slate-100 hover:text-[#0756ba]'" class="flex min-h-9 items-center rounded-md px-3 py-2 text-xs font-semibold">Data Karyawan</Link>
-                        <Link v-if="canManageEmployeeMasters" :href="route('dashboard.employee-masters.index')" :class="route().current('dashboard.employee-masters.*') ? 'bg-[#2867e8] text-white shadow-sm' : 'text-[#64748b] hover:bg-slate-100 hover:text-[#0756ba]'" class="flex min-h-9 items-center rounded-md px-3 py-2 text-xs font-semibold">Jabatan & Departemen</Link>
+                        <Link v-if="canManageEmployeeMasters" :href="route('dashboard.employee-masters.index')" :class="route().current('dashboard.employee-masters.*') ? 'bg-[#2867e8] text-white shadow-sm' : 'text-[#64748b] hover:bg-slate-100 hover:text-[#0756ba]'" class="flex min-h-9 items-center rounded-md px-3 py-2 text-xs font-semibold">Master Organisasi</Link>
                     </div>
                 </div>
 
