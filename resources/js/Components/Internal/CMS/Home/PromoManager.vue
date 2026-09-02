@@ -1,11 +1,13 @@
 <script setup>
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     promotions: { type: Array, required: true },
     summary: { type: Object, required: true },
 });
+const { confirm } = useConfirmation();
 
 const modal = ref(null);
 const localPreviewUrl = ref(null);
@@ -78,8 +80,10 @@ const selectPoster = (event) => {
     localPreviewUrl.value = file ? URL.createObjectURL(file) : null;
 };
 
-const submit = () => {
+const submit = async () => {
     const item = modal.value?.item;
+    const confirmed = await confirm({ type: item ? 'edit' : 'save', title: item ? 'Edit Promo' : 'Simpan Promo', message: 'Apakah Anda yakin ingin menyimpan data Promo ini?', confirmText: 'Ya, Simpan' });
+    if (!confirmed) return;
     const routeName = item ? 'dashboard.cms.home.promo.update' : 'dashboard.cms.home.promo.store';
     const routeParams = item ? item.id : undefined;
 
@@ -95,12 +99,15 @@ const submit = () => {
     });
 };
 
-const toggleStatus = (item) => {
+const toggleStatus = async (item) => {
+    const confirmed = await confirm({ type: item.is_active ? 'warning' : 'edit', title: item.is_active ? 'Nonaktifkan Promo' : 'Aktifkan Promo', message: `Apakah Anda yakin ingin ${item.is_active ? 'menonaktifkan' : 'mengaktifkan'} Promo ini?`, confirmText: `Ya, ${item.is_active ? 'Nonaktifkan' : 'Aktifkan'}` });
+    if (!confirmed) return;
     router.patch(route('dashboard.cms.home.promo.status', item.id), {}, { preserveScroll: true });
 };
 
-const destroyPromo = (item) => {
-    if (!window.confirm(`Hapus promo “${item.judul}”? Poster yang tidak dipakai record lain juga akan dihapus.`)) return;
+const destroyPromo = async (item) => {
+    const confirmed = await confirm({ type: 'delete', title: 'Hapus Promo', message: `Apakah Anda yakin ingin menghapus promo “${item.judul}”?`, description: 'Tindakan ini tidak dapat dibatalkan.', confirmText: 'Ya, Hapus' });
+    if (!confirmed) return;
     router.delete(route('dashboard.cms.home.promo.destroy', item.id), { preserveScroll: true });
 };
 

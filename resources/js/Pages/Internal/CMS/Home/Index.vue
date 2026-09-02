@@ -6,8 +6,7 @@ import PartnerManager from '@/Components/Internal/CMS/Home/PartnerManager.vue';
 import PromoManager from '@/Components/Internal/CMS/Home/PromoManager.vue';
 import ProductManager from '@/Components/Internal/CMS/Home/ProductManager.vue';
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
-import { Head, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head } from '@inertiajs/vue3';
 
 defineProps({
     user: { type: Object, required: true },
@@ -19,9 +18,6 @@ defineProps({
     partners: { type: Array, required: true },
 });
 
-const page = usePage();
-const success = computed(() => page.props.flash?.success);
-const error = computed(() => page.props.flash?.error);
 </script>
 
 <template>
@@ -34,8 +30,6 @@ const error = computed(() => page.props.flash?.error);
                 <p class="mt-1 max-w-2xl text-xs leading-5 text-slate-500">Kelola konten yang tampil pada halaman utama Kampoeng Radja.</p>
             </div>
 
-            <div v-if="success" class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700" role="status">{{ success }}</div>
-            <div v-if="error" class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ error }}</div>
 
             <div class="space-y-3">
                 <CmsSectionCard title="Hero" description="Konten utama pada bagian paling atas Beranda." icon="HR" :default-open="true">

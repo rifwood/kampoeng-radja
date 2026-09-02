@@ -1,7 +1,8 @@
 <script setup>
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     employee: { type: Object, required: true },
@@ -9,13 +10,11 @@ const props = defineProps({
     user: { type: Object, required: true },
 });
 
-const page = usePage();
+const { confirm } = useConfirmation();
 const exitOpen = ref(false);
 const accountOpen = ref(false);
 const exitForm = useForm({ tanggal_keluar: '' });
 const accountForm = useForm({ username: '', pin: '', pin_confirmation: '' });
-const success = computed(() => page.props.flash?.success);
-const error = computed(() => page.props.flash?.error);
 const isSuperAdmin = computed(() => props.permissions.roleName === 'super_admin');
 const employeeInitials = computed(() => props.employee.name
     .split(/\s+/)
@@ -47,19 +46,19 @@ const workRows = computed(() => rows([
     { label: 'Tanggal Keluar', value: props.employee.leftAt || '—', muted: !props.employee.leftAt },
 ]));
 
-const destroy = () => {
-    if (confirm('Hapus data karyawan ini secara permanen?')) {
-        router.delete(route('dashboard.karyawan.destroy', props.employee.id));
-    }
+const destroy = async () => {
+    const confirmed = await confirm({ type: 'delete', title: 'Hapus Data Karyawan', message: `Apakah Anda yakin ingin menghapus data ${props.employee.name}?`, description: 'Tindakan ini tidak dapat dibatalkan.', confirmText: 'Ya, Hapus' });
+    if (confirmed) router.delete(route('dashboard.karyawan.destroy', props.employee.id));
 };
 
-const deactivate = () => {
-    if (confirm('Nonaktifkan karyawan dan akun login terkait?')) {
-        router.patch(route('dashboard.karyawan.deactivate', props.employee.id));
-    }
+const deactivate = async () => {
+    const confirmed = await confirm({ type: 'warning', title: 'Nonaktifkan Karyawan', message: 'Nonaktifkan Karyawan dan akun login terkait?', confirmText: 'Ya, Nonaktifkan' });
+    if (confirmed) router.patch(route('dashboard.karyawan.deactivate', props.employee.id));
 };
 
-const submitExit = () => {
+const submitExit = async () => {
+    const confirmed = await confirm({ type: 'warning', title: 'Proses Karyawan Keluar', message: 'Apakah Anda yakin ingin memproses Karyawan ini sebagai Karyawan keluar?', confirmText: 'Ya, Proses' });
+    if (!confirmed) return;
     exitForm.patch(route('dashboard.karyawan.exit', props.employee.id), {
         preserveScroll: true,
         onSuccess: () => {
@@ -74,7 +73,9 @@ const openAccount = () => {
     accountOpen.value = true;
 };
 
-const submitAccount = () => {
+const submitAccount = async () => {
+    const confirmed = await confirm({ type: 'save', title: 'Buat Akun Karyawan', message: 'Apakah Anda yakin ingin membuat akun untuk Karyawan ini?', confirmText: 'Ya, Buat Akun' });
+    if (!confirmed) return;
     accountForm.post(route('dashboard.karyawan.account.store', props.employee.id), {
         preserveScroll: true,
         onSuccess: () => {
@@ -84,9 +85,10 @@ const submitAccount = () => {
     });
 };
 
-const updateAccountStatus = (isActive) => {
+const updateAccountStatus = async (isActive) => {
     const action = isActive ? 'aktifkan' : 'nonaktifkan';
-    if (!confirm(`Yakin ingin ${action} akun ini?`)) return;
+    const confirmed = await confirm({ type: isActive ? 'edit' : 'warning', title: `${isActive ? 'Aktifkan' : 'Nonaktifkan'} Akun`, message: `Apakah Anda yakin ingin ${action} akun ini?`, confirmText: `Ya, ${isActive ? 'Aktifkan' : 'Nonaktifkan'}` });
+    if (!confirmed) return;
 
     router.patch(
         route('dashboard.karyawan.account.status', props.employee.id),
@@ -105,13 +107,6 @@ const updateAccountStatus = (isActive) => {
     >
         <div class="min-h-full bg-[#f5f7fb]">
         <div class="mx-auto max-w-[1180px] px-4 py-6 sm:px-6 lg:px-8">
-            <div v-if="success" class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {{ success }}
-            </div>
-            <div v-if="error || page.props.errors?.account" class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {{ error || page.props.errors.account }}
-            </div>
-
             <Link :href="route('dashboard.karyawan.index')" class="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-[#1769e0] hover:text-[#0756ba]">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
                 Data Karyawan

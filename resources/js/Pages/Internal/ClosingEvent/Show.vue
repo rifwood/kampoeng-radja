@@ -1,7 +1,8 @@
 <script setup>
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     user: { type: Object, required: true },
@@ -9,16 +10,17 @@ const props = defineProps({
     permissions: { type: Object, required: true },
 });
 
-const page = usePage();
-const confirmDelete = ref(false);
-const success = computed(() => page.props.flash?.success);
+const { confirm } = useConfirmation();
 const currency = (value) => new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     maximumFractionDigits: 0,
 }).format(value);
 const locationCount = computed(() => props.event.lokasi.length);
-const remove = () => router.delete(route('dashboard.closing-event.destroy', props.event.id));
+const remove = async () => {
+    const confirmed = await confirm({ type: 'delete', title: 'Hapus Closing Event', message: `Apakah Anda yakin ingin menghapus data ${props.event.konsumen}?`, description: 'Tindakan ini tidak dapat dibatalkan.', confirmText: 'Ya, Hapus' });
+    if (confirmed) router.delete(route('dashboard.closing-event.destroy', props.event.id));
+};
 </script>
 
 <template>
@@ -27,12 +29,6 @@ const remove = () => router.delete(route('dashboard.closing-event.destroy', prop
     <InternalDashboardLayout :user="user" title="Detail Closing Event">
         <div class="min-h-full bg-[#f5f7fb]">
         <div class="mx-auto max-w-[1240px] px-4 py-6 sm:px-6 lg:px-7">
-            <div
-                v-if="success"
-                class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
-            >
-                {{ success }}
-            </div>
 
             <header class="mb-5 overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-[0_3px_12px_rgba(15,23,42,.05)]">
                 <div class="h-1 bg-[#1769e0]"></div>
@@ -71,7 +67,7 @@ const remove = () => router.delete(route('dashboard.closing-event.destroy', prop
                     <button
                         v-if="permissions.canDelete"
                         class="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100"
-                        @click="confirmDelete = true"
+                        @click="remove"
                     >
                         Hapus
                     </button>
@@ -138,29 +134,5 @@ const remove = () => router.delete(route('dashboard.closing-event.destroy', prop
         </div>
         </div>
 
-        <div
-            v-if="confirmDelete"
-            class="fixed inset-0 z-[80] grid place-items-center bg-slate-950/40 p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-closing-event-detail-title"
-            @click.self="confirmDelete = false"
-        >
-            <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-                <h3 id="delete-closing-event-detail-title" class="text-lg font-bold text-slate-800">Hapus Closing Event?</h3>
-                <p class="mt-2 text-sm text-slate-500">Tindakan ini tidak dapat dibatalkan.</p>
-                <div class="mt-6 flex justify-end gap-2">
-                    <button
-                        class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold"
-                        @click="confirmDelete = false"
-                    >
-                        Batal
-                    </button>
-                    <button class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white" @click="remove">
-                        Hapus
-                    </button>
-                </div>
-            </div>
-        </div>
     </InternalDashboardLayout>
 </template>

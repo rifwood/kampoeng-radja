@@ -2,6 +2,7 @@
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     user: { type: Object, required: true },
@@ -12,6 +13,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const { confirm } = useConfirmation();
 const modal = ref(null);
 const deleteTarget = ref(null);
 const existingPhotos = ref([]);
@@ -29,8 +31,7 @@ const form = useForm({
     urutan_tampil: 0,
 });
 
-const success = computed(() => page.props.flash?.success);
-const pageError = computed(() => page.props.flash?.error || page.props.errors?.is_unggulan);
+const pageError = computed(() => page.props.errors?.is_unggulan);
 const photoError = computed(() => {
     if (form.errors.fotos) return form.errors.fotos;
 
@@ -101,8 +102,10 @@ const removeNewPhoto = (index) => {
     form.fotos = newPhotoItems.value.map((item) => item.file);
 };
 
-const submit = () => {
+const submit = async () => {
     const item = modal.value?.item;
+    const confirmed = await confirm({ type: item ? 'edit' : 'save', title: item ? 'Edit Wahana' : 'Simpan Wahana', message: 'Apakah Anda yakin ingin menyimpan data Wahana ini?', confirmText: 'Ya, Simpan' });
+    if (!confirmed) return;
     const routeName = item ? 'dashboard.cms.wahana.update' : 'dashboard.cms.wahana.store';
 
     form.transform((data) => ({
@@ -120,17 +123,15 @@ const submit = () => {
     });
 };
 
-const toggleStatus = (item) => {
+const toggleStatus = async (item) => {
+    const confirmed = await confirm({ type: item.is_active ? 'warning' : 'edit', title: item.is_active ? 'Nonaktifkan Wahana' : 'Aktifkan Wahana', message: `Apakah Anda yakin ingin ${item.is_active ? 'menonaktifkan' : 'mengaktifkan'} Wahana ini?`, confirmText: `Ya, ${item.is_active ? 'Nonaktifkan' : 'Aktifkan'}` });
+    if (!confirmed) return;
     router.patch(route('dashboard.cms.wahana.status', item.id), {}, { preserveScroll: true });
 };
 
-const confirmDelete = () => {
-    if (!deleteTarget.value) return;
-
-    router.delete(route('dashboard.cms.wahana.destroy', deleteTarget.value.id), {
-        preserveScroll: true,
-        onSuccess: () => { deleteTarget.value = null; },
-    });
+const confirmDelete = async (item) => {
+    const confirmed = await confirm({ type: 'delete', title: 'Hapus Wahana', message: `Apakah Anda yakin ingin menghapus Wahana “${item.nama_wahana}”?`, description: 'Data dan seluruh foto terkait akan dihapus dari website.', confirmText: 'Ya, Hapus' });
+    if (confirmed) router.delete(route('dashboard.cms.wahana.destroy', item.id), { preserveScroll: true });
 };
 
 const closeTopModal = () => {
@@ -171,7 +172,6 @@ onBeforeUnmount(() => {
                 </button>
             </header>
 
-            <div v-if="success" class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700" role="status">{{ success }}</div>
             <div v-if="pageError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ pageError }}</div>
 
             <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
@@ -206,7 +206,7 @@ onBeforeUnmount(() => {
                         <div class="flex flex-wrap items-center gap-2 sm:max-w-[250px] sm:justify-end">
                             <button type="button" class="rounded-lg border border-blue-200 bg-white px-3 py-2 text-[11px] font-bold text-[#0756d8] hover:bg-blue-50" @click="openModal(item)">Edit</button>
                             <button type="button" :class="item.is_active ? 'border-orange-200 text-orange-700 hover:bg-orange-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'" class="rounded-lg border bg-white px-3 py-2 text-[11px] font-bold" @click="toggleStatus(item)">{{ item.is_active ? 'Nonaktifkan' : 'Aktifkan' }}</button>
-                            <button type="button" class="rounded-lg border border-red-200 bg-white px-3 py-2 text-[11px] font-bold text-red-600 hover:bg-red-50" @click="deleteTarget = item">Hapus</button>
+                            <button type="button" class="rounded-lg border border-red-200 bg-white px-3 py-2 text-[11px] font-bold text-red-600 hover:bg-red-50" @click="confirmDelete(item)">Hapus</button>
                         </div>
                     </article>
                 </div>

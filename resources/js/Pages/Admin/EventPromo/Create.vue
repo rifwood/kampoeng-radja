@@ -2,9 +2,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import EventPromoForm from './Partials/EventPromoForm.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const form = useForm({ judul: '', deskripsi_singkat: '', deskripsi_lengkap: '', poster: null, tanggal_mulai: '', tanggal_selesai: '', link_wa: '', is_active: true, urutan_tampil: 0 });
-const submit = () => form.post(route('admin.event-promo.store'), { forceFormData: true });
+const { confirm } = useConfirmation();
+const submit = async () => { const ok = await confirm({ type: 'save', title: 'Simpan Promo', message: 'Apakah Anda yakin ingin menyimpan Promo ini?', confirmText: 'Ya, Simpan' }); if (ok) form.post(route('admin.event-promo.store'), { forceFormData: true }); };
 </script>
 
 <template>

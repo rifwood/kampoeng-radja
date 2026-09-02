@@ -41,7 +41,11 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            // Local public uploads are served by this application, so a
+            // same-origin URL remains valid when a cloned project uses a
+            // different host or port. Set PUBLIC_DISK_URL only for a real
+            // external asset host/CDN.
+            'url' => rtrim(env('PUBLIC_DISK_URL', '/storage'), '/'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

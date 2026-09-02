@@ -2,6 +2,7 @@
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
 import MediaBeritaForm from './Partials/MediaBeritaForm.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 defineProps({
     user: { type: Object, required: true },
@@ -13,8 +14,11 @@ const form = useForm({
     foto: null,
     tanggal_publish: '',
 });
+const { confirm } = useConfirmation();
 
-const submit = () => {
+const submit = async () => {
+    const confirmed = await confirm({ type: 'save', title: 'Simpan Berita', message: 'Apakah Anda yakin ingin menyimpan Berita ini?', confirmText: 'Ya, Simpan' });
+    if (!confirmed) return;
     form.post(route('dashboard.cms.media.store'), {
         forceFormData: true,
     });

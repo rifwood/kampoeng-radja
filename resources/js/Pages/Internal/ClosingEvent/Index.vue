@@ -1,7 +1,8 @@
 <script setup>
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     user: { type: Object, required: true },
@@ -11,11 +12,9 @@ const props = defineProps({
     permissions: { type: Object, required: true },
 });
 
-const page = usePage();
+const { confirm } = useConfirmation();
 const filter = reactive({ bulan: props.filters.bulan, tahun: props.filters.tahun, status: props.filters.status ?? '' });
 const deleteTarget = ref(null);
-const success = computed(() => page.props.flash?.success);
-const error = computed(() => page.props.flash?.error);
 const exportUrl = computed(() => route('dashboard.closing-event.export', {
     bulan: filter.bulan,
     tahun: filter.tahun,
@@ -24,6 +23,7 @@ const months = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ];
+const exportPeriodLabel = computed(() => `${months[Number(filter.bulan) - 1] ?? filter.bulan} ${filter.tahun}`);
 
 const applyFilter = () => router.get(
     route('dashboard.closing-event.index'),
@@ -31,10 +31,20 @@ const applyFilter = () => router.get(
     { preserveState: true, replace: true },
 );
 const number = (value) => new Intl.NumberFormat('id-ID').format(value);
-const remove = () => router.delete(
-    route('dashboard.closing-event.destroy', deleteTarget.value.id),
-    { onSuccess: () => { deleteTarget.value = null; } },
-);
+const exportClosingEvents = async () => {
+    const confirmed = await confirm({
+        type: 'save',
+        title: 'Export Closing Event',
+        message: `Export laporan Closing Event periode ${exportPeriodLabel.value}?`,
+        description: 'File Excel akan diunduh setelah konfirmasi.',
+        confirmText: 'Ya, Export',
+    });
+    if (confirmed) window.location.assign(exportUrl.value);
+};
+const remove = async (item) => {
+    const confirmed = await confirm({ type: 'delete', title: 'Hapus Closing Event', message: `Apakah Anda yakin ingin menghapus data ${item.konsumen}?`, description: 'Tindakan ini tidak dapat dibatalkan.', confirmText: 'Ya, Hapus' });
+    if (confirmed) router.delete(route('dashboard.closing-event.destroy', item.id));
+};
 </script>
 
 <template>
@@ -42,18 +52,6 @@ const remove = () => router.delete(
 
     <InternalDashboardLayout :user="user" title="Data Closing Event">
         <div class="mx-auto max-w-[1540px] px-4 py-6 sm:px-6 lg:px-7">
-            <div
-                v-if="success"
-                class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
-            >
-                {{ success }}
-            </div>
-            <div
-                v-if="error"
-                class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            >
-                {{ error }}
-            </div>
 
             <header class="mb-5">
                 <h2 class="text-2xl font-bold tracking-tight text-[#172554]">Data Closing Event</h2>
@@ -102,17 +100,18 @@ const remove = () => router.delete(
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-                        <a
+                        <button
                             v-if="permissions.canExport"
-                            :href="exportUrl"
+                            type="button"
                             class="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                            @click="exportClosingEvents"
                         >
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                                 <path d="M12 3v12m0 0 4-4m-4 4-4-4" />
                                 <path d="M5 14v5h14v-5" />
                             </svg>
                             Export Excel
-                        </a>
+                        </button>
                         <Link
                             v-if="permissions.canCreate"
                             :href="route('dashboard.closing-event.create')"
@@ -272,7 +271,7 @@ const remove = () => router.delete(
                                             class="grid h-7 w-7 place-items-center rounded-md border border-red-100 text-red-500 transition hover:bg-red-50"
                                             title="Hapus Closing Event"
                                             aria-label="Hapus Closing Event"
-                                            @click="deleteTarget = item"
+                                            @click="remove(item)"
                                         >
                                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                                 <path d="M4 7h16M9 7V4h6v3m-9 0 1 14h10l1-14M10 11v6m4-6v6" />
@@ -324,37 +323,6 @@ const remove = () => router.delete(
             </section>
         </div>
 
-        <div
-            v-if="deleteTarget"
-            class="fixed inset-0 z-[80] grid place-items-center bg-slate-950/40 p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-closing-event-title"
-            @click.self="deleteTarget = null"
-        >
-            <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-                <h3 id="delete-closing-event-title" class="text-lg font-bold text-slate-800">Hapus Closing Event?</h3>
-                <p class="mt-2 text-sm text-slate-500">
-                    Data {{ deleteTarget.konsumen }} dan relasi lokasinya akan dihapus permanen.
-                </p>
-                <div class="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600"
-                        @click="deleteTarget = null"
-                    >
-                        Batal
-                    </button>
-                    <button
-                        type="button"
-                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white"
-                        @click="remove"
-                    >
-                        Hapus
-                    </button>
-                </div>
-            </div>
-        </div>
     </InternalDashboardLayout>
 </template>
 

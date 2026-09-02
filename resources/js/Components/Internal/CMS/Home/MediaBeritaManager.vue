@@ -1,12 +1,12 @@
 <script setup>
-import CmsDeleteConfirmation from './CmsDeleteConfirmation.vue';
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 defineProps({ items: { type: Array, required: true } });
 
 const modal = ref(null);
-const deleting = ref(null);
+const { confirm } = useConfirmation();
 const localPreview = ref(null);
 const fileKey = ref(0);
 const titleInput = ref(null);
@@ -22,14 +22,16 @@ const openModal = async (item = null) => {
 };
 const closeModal = () => { modal.value = null; revokePreview(); form.reset(); form.clearErrors(); };
 const selectPhoto = (event) => { const [file] = event.target.files; revokePreview(); form.foto = file || null; localPreview.value = file ? URL.createObjectURL(file) : null; };
-const submit = () => {
+const submit = async () => {
     const item = modal.value?.item;
+    const confirmed = await confirm({ type: item ? 'edit' : 'save', title: item ? 'Edit Berita' : 'Simpan Berita', message: item ? 'Apakah Anda yakin ingin menyimpan perubahan berita ini?' : 'Apakah Anda yakin ingin menyimpan berita ini?', confirmText: 'Ya, Simpan' });
+    if (!confirmed) return;
     form.transform((data) => ({ ...data, ...(item ? { _method: 'patch' } : {}) })).post(route(item ? 'dashboard.cms.home.media.update' : 'dashboard.cms.home.media.store', item?.id), {
         forceFormData: true, preserveScroll: true, onSuccess: closeModal,
     });
 };
-const confirmDelete = () => router.delete(route('dashboard.cms.home.media.destroy', deleting.value.id), { preserveScroll: true, onFinish: () => { deleting.value = null; } });
-watch([modal, deleting], ([edit, remove]) => { document.body.style.overflow = edit || remove ? 'hidden' : ''; });
+const confirmDelete = async (item) => { const confirmed = await confirm({ type: 'delete', title: 'Hapus Berita', message: `Apakah Anda yakin ingin menghapus berita “${item.judul}”?`, description: 'Berita tidak akan tampil lagi pada website.', confirmText: 'Ya, Hapus' }); if (confirmed) router.delete(route('dashboard.cms.home.media.destroy', item.id), { preserveScroll: true }); };
+watch(modal, (edit) => { document.body.style.overflow = edit ? 'hidden' : ''; });
 onBeforeUnmount(() => { document.body.style.overflow = ''; revokePreview(); });
 </script>
 
@@ -43,7 +45,7 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; revokePreview(); });
             <article v-for="item in items" :key="item.id" class="grid gap-4 rounded-xl border border-slate-200 bg-slate-50/50 p-3 sm:grid-cols-[112px_minmax(0,1fr)_auto] sm:items-center">
                 <img :src="item.foto_url" :alt="item.judul" class="aspect-[16/10] w-full rounded-lg border border-slate-200 object-cover sm:w-28" />
                 <div class="min-w-0"><h4 class="truncate text-sm font-bold text-[#172554]">{{ item.judul }}</h4><p class="mt-1 text-xs font-semibold text-[#0756ba]">{{ formatDate(item.tanggal_publish_iso) }}</p><p class="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{{ item.deskripsi }}</p></div>
-                <div class="flex gap-2"><button type="button" class="rounded-lg border border-blue-200 bg-white px-3 py-2 text-[11px] font-bold text-[#0756d8]" @click="openModal(item)">Edit</button><button type="button" class="rounded-lg border border-red-200 bg-white px-3 py-2 text-[11px] font-bold text-red-600" @click="deleting = item">Hapus</button></div>
+                <div class="flex gap-2"><button type="button" class="rounded-lg border border-blue-200 bg-white px-3 py-2 text-[11px] font-bold text-[#0756d8]" @click="openModal(item)">Edit</button><button type="button" class="rounded-lg border border-red-200 bg-white px-3 py-2 text-[11px] font-bold text-red-600" @click="confirmDelete(item)">Hapus</button></div>
             </article>
         </div>
         <div v-else class="mt-4 rounded-xl border border-dashed border-slate-300 px-6 py-12 text-center"><h4 class="text-sm font-bold text-slate-700">Belum ada Media &amp; Berita</h4><p class="mt-1 text-xs text-slate-500">Tambahkan berita pertama untuk ditampilkan di website.</p></div>
@@ -62,6 +64,5 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; revokePreview(); });
                 <footer class="sticky bottom-0 flex justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4"><button type="button" class="rounded-lg border border-slate-300 px-4 py-2.5 text-xs font-bold text-slate-600" @click="closeModal">Batal</button><button type="submit" :disabled="form.processing" class="rounded-lg bg-[#1769e0] px-5 py-2.5 text-xs font-bold text-white disabled:opacity-60">{{ form.processing ? 'Menyimpan...' : 'Simpan Berita' }}</button></footer>
             </form>
         </div>
-        <CmsDeleteConfirmation :open="Boolean(deleting)" title="Hapus berita?" message="Berita yang dihapus tidak akan tampil lagi pada website." confirm-label="Hapus Berita" @cancel="deleting = null" @confirm="confirmDelete" />
     </div>
 </template>

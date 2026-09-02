@@ -1,7 +1,8 @@
 <script setup>
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     user: { type: Object, required: true },
@@ -11,12 +12,10 @@ const props = defineProps({
     permissions: { type: Object, required: true },
 });
 
-const page = usePage();
+const { confirm } = useConfirmation();
 const modal = ref(null);
 const deleteTarget = ref(null);
 const form = useForm({ value: '' });
-const success = computed(() => page.props.flash?.success);
-const error = computed(() => page.props.flash?.error);
 const groups = computed(() => [
     { type: 'pic', title: 'Master PIC', button: 'Tambah PIC', field: 'nama_pic', items: props.pic },
     { type: 'jenis-event', title: 'Master Jenis Event', button: 'Tambah Jenis Event', field: 'jenis_event', items: props.jenisEvent },
@@ -40,9 +39,11 @@ const close = () => {
     form.reset();
     form.clearErrors();
 };
-const submit = () => {
+const submit = async () => {
     const { group, item } = modal.value;
     const edit = Boolean(item);
+    const confirmed = await confirm({ type: edit ? 'edit' : 'save', title: `${edit ? 'Edit' : 'Simpan'} ${entityLabel(group)}`, message: `Apakah Anda yakin ingin menyimpan data ${entityLabel(group)} ini?`, confirmText: 'Ya, Simpan' });
+    if (!confirmed) return;
 
     form
         .transform(() => ({ [group.field]: form.value, ...(edit ? { _method: 'put' } : {}) }))
@@ -54,12 +55,9 @@ const submit = () => {
             { preserveScroll: true, onSuccess: close },
         );
 };
-const remove = () => {
-    const { group, item } = deleteTarget.value;
-    router.delete(
-        route(`dashboard.closing-event.master.${group.type}.destroy`, item.id),
-        { preserveScroll: true, onSuccess: () => { deleteTarget.value = null; } },
-    );
+const remove = async (group, item) => {
+    const confirmed = await confirm({ type: 'delete', title: `Hapus ${entityLabel(group)}`, message: `Apakah Anda yakin ingin menghapus data ${entityLabel(group)} ini?`, description: 'Data tidak dapat dihapus jika masih digunakan pada Closing Event.', confirmText: 'Ya, Hapus' });
+    if (confirmed) router.delete(route(`dashboard.closing-event.master.${group.type}.destroy`, item.id), { preserveScroll: true });
 };
 </script>
 
@@ -68,18 +66,6 @@ const remove = () => {
 
     <InternalDashboardLayout :user="user" title="Master Data Event">
         <div class="mx-auto max-w-[1380px] px-4 py-6 sm:px-6 lg:px-7">
-            <div
-                v-if="success"
-                class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
-            >
-                {{ success }}
-            </div>
-            <div
-                v-if="error"
-                class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            >
-                {{ error }}
-            </div>
 
             <header class="mb-5">
                 <h2 class="text-2xl font-bold tracking-tight text-[#172554]">Master Data Event</h2>
@@ -148,7 +134,7 @@ const remove = () => {
                                                 class="grid h-7 w-7 place-items-center rounded-md border border-red-100 text-red-500 transition hover:bg-red-50"
                                                 :title="`Hapus ${entityLabel(group)}`"
                                                 :aria-label="`Hapus ${entityLabel(group)}`"
-                                                @click="deleteTarget = { group, item }"
+                                                @click="remove(group, item)"
                                             >
                                                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                                     <path d="M4 7h16M9 7V4h6v3m-9 0 1 14h10l1-14M10 11v6m4-6v6" />
@@ -237,36 +223,5 @@ const remove = () => {
             </div>
         </div>
 
-        <div
-            v-if="deleteTarget"
-            class="fixed inset-0 z-[80] grid place-items-center bg-slate-950/40 p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-master-title"
-            @click.self="deleteTarget = null"
-        >
-            <div class="w-full max-w-md rounded-xl bg-white p-5 shadow-xl sm:p-6">
-                <h3 id="delete-master-title" class="text-lg font-bold text-[#172554]">Hapus data master?</h3>
-                <p class="mt-2 text-sm text-slate-500">
-                    Data tidak dapat dihapus jika masih digunakan pada Closing Event.
-                </p>
-                <div class="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
-                        @click="deleteTarget = null"
-                    >
-                        Batal
-                    </button>
-                    <button
-                        type="button"
-                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-                        @click="remove"
-                    >
-                        Hapus
-                    </button>
-                </div>
-            </div>
-        </div>
     </InternalDashboardLayout>
 </template>

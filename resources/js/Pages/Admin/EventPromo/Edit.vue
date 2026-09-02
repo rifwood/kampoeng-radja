@@ -2,10 +2,12 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import EventPromoForm from './Partials/EventPromoForm.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({ item: { type: Object, required: true } });
 const form = useForm({ _method: 'patch', judul: props.item.judul, deskripsi_singkat: props.item.deskripsi_singkat, deskripsi_lengkap: props.item.deskripsi_lengkap || '', poster: null, tanggal_mulai: props.item.tanggal_mulai || '', tanggal_selesai: props.item.tanggal_selesai || '', link_wa: props.item.link_wa || '', is_active: props.item.is_active, urutan_tampil: props.item.urutan_tampil });
-const submit = () => form.post(route('admin.event-promo.update', props.item.id), { forceFormData: true });
+const { confirm } = useConfirmation();
+const submit = async () => { const ok = await confirm({ type: 'edit', title: 'Edit Promo', message: 'Apakah Anda yakin ingin menyimpan perubahan Promo ini?', confirmText: 'Ya, Simpan' }); if (ok) form.post(route('admin.event-promo.update', props.item.id), { forceFormData: true }); };
 </script>
 
 <template>

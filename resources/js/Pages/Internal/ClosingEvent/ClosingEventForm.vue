@@ -1,6 +1,7 @@
 <script setup>
 import { Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     event: { type: Object, default: null },
@@ -8,6 +9,7 @@ const props = defineProps({
 });
 
 const editing = computed(() => Boolean(props.event));
+const { confirm } = useConfirmation();
 const form = useForm({
     _method: editing.value ? 'put' : undefined,
     pic_id: props.event?.pic_id ?? '',
@@ -30,7 +32,14 @@ const form = useForm({
 const inputClass = 'mt-1.5 block w-full rounded-lg border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-[#2867e8] focus:ring-[#2867e8]';
 const labelClass = 'block text-xs font-semibold text-slate-700';
 
-const submit = () => {
+const submit = async () => {
+    const confirmed = await confirm({
+        type: editing.value ? 'edit' : 'save',
+        title: editing.value ? 'Edit Closing Event' : 'Simpan Closing Event',
+        message: editing.value ? 'Apakah Anda yakin ingin menyimpan perubahan Closing Event ini?' : 'Apakah Anda yakin ingin menyimpan Closing Event ini?',
+        confirmText: 'Ya, Simpan',
+    });
+    if (!confirmed) return;
     if (editing.value) {
         form.post(route('dashboard.closing-event.update', props.event.id), { preserveScroll: true });
         return;

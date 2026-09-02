@@ -1,6 +1,7 @@
 <script setup>
 import { Link, useForm } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, ref } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     employee: { type: Object, default: null },
@@ -8,6 +9,7 @@ const props = defineProps({
 });
 
 const editing = computed(() => Boolean(props.employee));
+const { confirm } = useConfirmation();
 const form = useForm({
     _method: editing.value ? 'put' : undefined,
     nik: props.employee?.nik ?? '',
@@ -56,7 +58,15 @@ const fields = {
     label: 'block text-xs font-semibold text-slate-700',
 };
 
-const submit = () => {
+const submit = async () => {
+    const confirmed = await confirm({
+        type: editing.value ? 'edit' : 'save',
+        title: editing.value ? 'Edit Data Karyawan' : 'Simpan Data Karyawan',
+        message: editing.value ? 'Apakah Anda yakin ingin menyimpan perubahan data Karyawan ini?' : 'Apakah Anda yakin ingin menyimpan data Karyawan ini?',
+        confirmText: 'Ya, Simpan',
+    });
+    if (!confirmed) return;
+
     const options = { forceFormData: true, preserveScroll: true };
     if (editing.value) {
         form.post(route('dashboard.karyawan.update', props.employee.id), options);

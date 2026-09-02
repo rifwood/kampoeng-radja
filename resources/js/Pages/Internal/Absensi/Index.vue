@@ -1,10 +1,10 @@
 <script setup>
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
-import Modal from '@/Components/Modal.vue';
 import AttendanceTimeInput from '@/Components/Internal/AttendanceTimeInput.vue';
 import AttendanceEventDayModal from '@/Components/Internal/AttendanceEventDayModal.vue';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     attendanceDate: { type: String, required: true },
@@ -20,11 +20,9 @@ const props = defineProps({
     user: { type: Object, required: true },
 });
 
-const page = usePage();
+const { confirm } = useConfirmation();
 const isEditing = ref(props.permissions.canManage && !props.isSaved && props.canMutateDate);
-const bulkConfirmationOpen = ref(false);
 const eventDayModalOpen = ref(false);
-const normalDayConfirmationOpen = ref(false);
 const searchQuery = ref('');
 const reportPeriod = ref(props.today.slice(0, 7));
 const months = [
@@ -72,13 +70,12 @@ const hasValidTimes = computed(() => form.records.every((record) => {
     return !(record.jam_masuk && record.jam_keluar && record.jam_keluar < record.jam_masuk);
 }));
 const missingSelectionCount = computed(() => form.records.filter((record) => !['H', 'I', 'A'].includes(record.status_kehadiran)).length);
-const successMessage = computed(() => page.props.flash?.success);
-const errorMessage = computed(() => page.props.flash?.error);
 const pageTitle = computed(() => props.permissions.canManage ? 'Kelola Absensi' : 'Data Absensi');
 const exportUrl = computed(() => route('admin.absensi.export', {
     bulan: reportMonth.value,
     tahun: reportYear.value,
 }));
+const exportPeriodLabel = computed(() => reportPeriodOptions.value.find((period) => period.value === reportPeriod.value)?.label ?? reportPeriod.value);
 const formattedDate = computed(() => new Intl.DateTimeFormat('id-ID', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta',
 }).format(new Date(`${props.attendanceDate}T00:00:00+07:00`)));
@@ -178,16 +175,36 @@ const cancelEditing = () => {
     form.clearErrors();
     isEditing.value = false;
 };
-const markUnselectedPresent = () => {
+const markUnselectedPresent = async () => {
+    const confirmed = await confirm({
+        type: 'save',
+        title: 'Isi Absensi yang Kosong',
+        message: `Tandai ${missingSelectionCount.value} karyawan yang belum dipilih sebagai Hadir?`,
+        description: 'Status yang sudah terisi tidak akan berubah.',
+        confirmText: 'Ya, Isi',
+    });
+    if (!confirmed) return;
+
     form.records.forEach((record) => {
         if (!['H', 'I', 'A'].includes(record.status_kehadiran)) {
             setAttendanceStatus(record, 'H');
         }
     });
-    bulkConfirmationOpen.value = false;
 };
-const submit = () => {
+const exportAttendance = async () => {
+    const confirmed = await confirm({
+        type: 'save',
+        title: 'Export Absensi',
+        message: `Export laporan Absensi periode ${exportPeriodLabel.value}?`,
+        description: 'File Excel akan diunduh setelah konfirmasi.',
+        confirmText: 'Ya, Export',
+    });
+    if (confirmed) window.location.assign(exportUrl.value);
+};
+const submit = async () => {
     if (!props.permissions.canManage || !allSelected.value || !hasValidTimes.value || form.processing) return;
+    const confirmed = await confirm({ type: 'save', title: 'Simpan Absensi', message: 'Apakah Anda yakin ingin menyimpan data Absensi?', confirmText: 'Ya, Simpan' });
+    if (!confirmed) return;
 
     form.put(route('admin.absensi.store'), {
         preserveScroll: true,
@@ -204,11 +221,12 @@ const openDate = (event) => {
 const openQuickDate = (date) => {
     router.get(route('admin.absensi.index'), { tanggal: date });
 };
-const changeToNormalDay = () => {
+const changeToNormalDay = async () => {
+    const confirmed = await confirm({ type: 'warning', title: 'Ubah menjadi Hari Normal', message: 'Konfigurasi jadwal Panitia Event pada tanggal ini tidak akan digunakan lagi.', description: 'Record Absensi yang sudah ada tetap dipertahankan.', confirmText: 'Ya, Ubah' });
+    if (!confirmed) return;
     router.delete(route('admin.absensi.event-day.destroy'), {
         data: { tanggal: props.attendanceDate },
         preserveScroll: true,
-        onSuccess: () => { normalDayConfirmationOpen.value = false; },
     });
 };
 
@@ -217,9 +235,7 @@ watch(() => props.attendanceDate, () => {
     form.records = recordsFromEmployees(props.employees);
     originalRecords.value = JSON.parse(JSON.stringify(form.records));
     form.clearErrors();
-    bulkConfirmationOpen.value = false;
     eventDayModalOpen.value = false;
-    normalDayConfirmationOpen.value = false;
     isEditing.value = props.permissions.canManage && !props.isSaved && props.canMutateDate;
 });
 
@@ -240,21 +256,6 @@ watch(() => props.isSaved, (saved) => {
         @search="searchQuery = $event"
     >
         <section class="mx-auto min-w-0 max-w-[1500px] px-4 py-5 sm:px-6 lg:px-7">
-            <div
-                v-if="successMessage"
-                role="status"
-                class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"
-            >
-                {{ successMessage }}
-            </div>
-
-            <div
-                v-if="errorMessage"
-                role="alert"
-                class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
-            >
-                {{ errorMessage }}
-            </div>
 
             <div
                 v-if="Object.keys(form.errors).length"
@@ -323,7 +324,7 @@ watch(() => props.isSaved, (saved) => {
                             v-if="attendanceDay.type === 'event'"
                             type="button"
                             class="h-9 rounded-lg border border-slate-300 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                            @click="normalDayConfirmationOpen = true"
+                            @click="changeToNormalDay"
                         >
                             Ubah ke Hari Normal
                         </button>
@@ -381,7 +382,7 @@ watch(() => props.isSaved, (saved) => {
                             type="button"
                             class="h-10 rounded-lg border border-[#2867e8] px-4 text-sm font-semibold text-[#0756ba] transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                             :disabled="form.processing"
-                            @click="bulkConfirmationOpen = true"
+                            @click="markUnselectedPresent"
                         >
                             Isi Kosong → Hadir
                         </button>
@@ -414,13 +415,14 @@ watch(() => props.isSaved, (saved) => {
                             <option v-for="period in reportPeriodOptions" :key="period.value" :value="period.value">{{ period.label }}</option>
                         </select>
                     </label>
-                    <a
-                        :href="exportUrl"
+                    <button
+                        type="button"
                         class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0756ba] px-5 text-sm font-semibold text-white transition hover:bg-[#064ca3]"
+                        @click="exportAttendance"
                     >
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4" /><path d="M5 18v3h14v-3" /></svg>
                         Export Excel
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -600,38 +602,6 @@ watch(() => props.isSaved, (saved) => {
                 </div>
             </div>
 
-            <Modal :show="bulkConfirmationOpen" max-width="sm" @close="bulkConfirmationOpen = false">
-                <div class="p-5 sm:p-6">
-                    <div class="flex items-start gap-3">
-                        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-blue-50 text-[#0756ba]">
-                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18" /></svg>
-                        </span>
-                        <div>
-                            <h3 class="font-heading text-base font-bold text-[#0f172a]">Isi absensi yang kosong?</h3>
-                            <p class="mt-1.5 text-sm leading-5 text-slate-500">
-                                Tandai {{ missingSelectionCount }} karyawan yang belum dipilih sebagai Hadir. Status yang sudah terisi tidak akan berubah.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <button
-                            type="button"
-                            class="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
-                            @click="bulkConfirmationOpen = false"
-                        >
-                            Batal
-                        </button>
-                        <button
-                            type="button"
-                            class="h-10 rounded-lg bg-[#0756ba] px-5 text-sm font-semibold text-white transition hover:bg-[#064ca3]"
-                            @click="markUnselectedPresent"
-                        >
-                            Ya, Isi
-                        </button>
-                    </div>
-                </div>
-            </Modal>
-
             <AttendanceEventDayModal
                 :show="eventDayModalOpen"
                 :attendance-date="attendanceDate"
@@ -640,16 +610,6 @@ watch(() => props.isSaved, (saved) => {
                 @close="eventDayModalOpen = false"
             />
 
-            <Modal :show="normalDayConfirmationOpen" max-width="sm" @close="normalDayConfirmationOpen = false">
-                <div class="p-5 sm:p-6">
-                    <h3 class="font-heading text-base font-bold text-slate-900">Ubah menjadi Hari Normal?</h3>
-                    <p class="mt-2 text-sm leading-6 text-slate-500">Konfigurasi jadwal Panitia Event pada tanggal ini tidak akan digunakan lagi. Record Absensi yang sudah ada tetap dipertahankan.</p>
-                    <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <button type="button" class="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50" @click="normalDayConfirmationOpen = false">Batal</button>
-                        <button type="button" class="h-10 rounded-lg bg-[#0756ba] px-5 text-sm font-semibold text-white hover:bg-[#064ca3]" @click="changeToNormalDay">Ubah ke Hari Normal</button>
-                    </div>
-                </div>
-            </Modal>
         </section>
     </InternalDashboardLayout>
 </template>

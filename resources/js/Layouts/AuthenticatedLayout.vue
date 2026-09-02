@@ -5,13 +5,26 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { watch } from 'vue';
+import ConfirmationDialog from '@/Components/Internal/Feedback/ConfirmationDialog.vue';
+import NotificationToast from '@/Components/Internal/Feedback/NotificationToast.vue';
+import { useNotification } from '@/composables/useNotification';
 
 const showingNavigationDropdown = ref(false);
+const page = usePage();
+const notification = useNotification();
+watch(() => [page.url, page.props.flash?.success, page.props.flash?.error, page.props.flash?.warning], ([, success, error, warning]) => {
+    if (success) notification.success(success, 'Berhasil');
+    if (error) notification.error(error, 'Gagal');
+    if (warning) notification.warning(warning, 'Peringatan');
+}, { immediate: true });
 </script>
 
 <template>
     <div>
+        <ConfirmationDialog />
+        <NotificationToast />
         <div class="min-h-screen bg-gray-100">
             <nav
                 class="border-b border-gray-100 bg-white"

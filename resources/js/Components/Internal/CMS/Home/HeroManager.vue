@@ -1,10 +1,12 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, ref } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     hero: { type: Object, default: null },
 });
+const { confirm } = useConfirmation();
 
 const videoPreview = ref(null);
 const videoInput = ref(null);
@@ -26,7 +28,9 @@ const selectVideo = (event) => {
     if (form.video) videoPreview.value = URL.createObjectURL(form.video);
 };
 
-const submit = () => {
+const submit = async () => {
+    const confirmed = await confirm({ type: 'save', title: 'Simpan Hero Beranda', message: 'Apakah Anda yakin ingin menyimpan perubahan video Hero?', confirmText: 'Ya, Simpan' });
+    if (!confirmed) return;
     form.transform((data) => ({ ...data, _method: 'patch' })).post(route('dashboard.cms.home.hero.update'), {
         preserveScroll: true,
         forceFormData: true,

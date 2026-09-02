@@ -1,6 +1,9 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import ConfirmationDialog from '@/Components/Internal/Feedback/ConfirmationDialog.vue';
+import NotificationToast from '@/Components/Internal/Feedback/NotificationToast.vue';
+import { useNotification } from '@/composables/useNotification';
 
 const props = defineProps({
     user: { type: Object, required: true },
@@ -13,6 +16,7 @@ const props = defineProps({
 defineEmits(['search']);
 
 const page = usePage();
+const notification = useNotification();
 const sidebarOpen = ref(false);
 const employeeRouteActive = computed(() => page.url.startsWith('/dashboard/karyawan') || page.url.startsWith('/dashboard/jabatan-departemen'));
 const employeeExpanded = ref(employeeRouteActive.value);
@@ -38,10 +42,21 @@ watch(closingEventRouteActive, (active) => {
 watch(cmsRouteActive, (active) => {
     if (active) cmsExpanded.value = true;
 });
+watch(
+    () => [page.url, page.props.flash?.success, page.props.flash?.error, page.props.flash?.warning],
+    ([, success, error, warning]) => {
+        if (success) notification.success(success, { title: 'Berhasil' });
+        if (error) notification.error(error, { title: 'Gagal' });
+        if (warning) notification.warning(warning);
+    },
+    { immediate: true },
+);
 </script>
 
 <template>
     <div class="min-h-screen overflow-x-hidden bg-[#f7f9fc] text-[#172554]">
+        <ConfirmationDialog />
+        <NotificationToast />
         <div v-if="sidebarOpen" class="fixed inset-0 z-40 bg-slate-950/30 lg:hidden" @click="sidebarOpen = false"></div>
 
         <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 flex w-[252px] flex-col border-r border-[#dce3ed] bg-white transition-transform duration-200 lg:translate-x-0">

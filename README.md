@@ -1,3 +1,22 @@
+# Kampoeng Radja
+
+## Setup setelah clone
+
+Setelah menyiapkan `.env`, dependency, dan database, jalankan:
+
+```powershell
+php artisan storage:link
+php artisan optimize:clear
+```
+
+Upload CMS disimpan pada `storage/app/public`, sedangkan browser mengaksesnya melalui `public/storage`. Pastikan `public/storage` merupakan link/junction yang valid menuju folder tersebut; link ini sengaja tidak disimpan di Git.
+
+Public disk menggunakan URL same-origin `/storage` secara default agar tetap valid ketika host atau port development berbeda antar laptop. `APP_URL` tetap harus sesuai URL aplikasi. Gunakan `PUBLIC_DISK_URL` hanya bila file public benar-benar disajikan dari host/CDN terpisah.
+
+Jangan menghapus `storage/app/public` ketika memperbaiki link karena folder tersebut merupakan sumber file upload.
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

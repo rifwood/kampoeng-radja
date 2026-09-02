@@ -2,6 +2,7 @@
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 const props = defineProps({
     user: { type: Object, required: true },
@@ -9,6 +10,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const { confirm } = useConfirmation();
 const modal = ref(null);
 const deleteTarget = ref(null);
 const existingPhotos = ref([]);
@@ -24,8 +26,7 @@ const form = useForm({
     existing_photos: [],
 });
 
-const success = computed(() => page.props.flash?.success);
-const pageError = computed(() => page.props.flash?.error || page.props.errors?.existing_photos);
+const pageError = computed(() => page.props.errors?.existing_photos);
 const photoError = computed(() => {
     if (form.errors.fotos) return form.errors.fotos;
 
@@ -107,8 +108,10 @@ const removeNewPhoto = (index) => {
     form.fotos = newPhotoItems.value.map((item) => item.file);
 };
 
-const submit = () => {
+const submit = async () => {
     const item = modal.value?.item;
+    const confirmed = await confirm({ type: item ? 'edit' : 'save', title: item ? 'Edit Galeri Event' : 'Simpan Galeri Event', message: 'Apakah Anda yakin ingin menyimpan album Galeri Event ini?', confirmText: 'Ya, Simpan' });
+    if (!confirmed) return;
     const routeName = item ? 'dashboard.cms.gallery.update' : 'dashboard.cms.gallery.store';
 
     form.transform((data) => ({
@@ -127,13 +130,9 @@ const submit = () => {
     });
 };
 
-const confirmDelete = () => {
-    if (!deleteTarget.value) return;
-
-    router.delete(route('dashboard.cms.gallery.destroy', deleteTarget.value.id), {
-        preserveScroll: true,
-        onSuccess: () => { deleteTarget.value = null; },
-    });
+const confirmDelete = async (item) => {
+    const confirmed = await confirm({ type: 'delete', title: 'Hapus Galeri Event', message: `Apakah Anda yakin ingin menghapus album “${item.nama_event}”?`, description: `Album dan seluruh ${item.photo_count} foto di dalamnya akan dihapus.`, confirmText: 'Ya, Hapus' });
+    if (confirmed) router.delete(route('dashboard.cms.gallery.destroy', item.id), { preserveScroll: true });
 };
 
 const closeTopModal = () => {
@@ -175,7 +174,6 @@ onBeforeUnmount(() => {
                 </button>
             </header>
 
-            <div v-if="success" class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700" role="status">{{ success }}</div>
             <div v-if="pageError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ pageError }}</div>
 
             <section class="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
@@ -201,7 +199,7 @@ onBeforeUnmount(() => {
                         </div>
                         <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                             <button type="button" class="rounded-lg border border-blue-200 bg-white px-3 py-2 text-[11px] font-bold text-[#0756d8] hover:bg-blue-50" @click="openModal(item)">Edit</button>
-                            <button type="button" class="rounded-lg border border-red-200 bg-white px-3 py-2 text-[11px] font-bold text-red-600 hover:bg-red-50" @click="deleteTarget = item">Hapus</button>
+                            <button type="button" class="rounded-lg border border-red-200 bg-white px-3 py-2 text-[11px] font-bold text-red-600 hover:bg-red-50" @click="confirmDelete(item)">Hapus</button>
                         </div>
                     </article>
                 </div>

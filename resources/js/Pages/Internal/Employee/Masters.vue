@@ -1,31 +1,46 @@
 <script setup>
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 defineProps({ user: { type: Object, required: true }, jabatan: { type: Array, required: true }, departemen: { type: Array, required: true }, penempatan: { type: Array, required: true } });
-const page = usePage();
+const { confirm } = useConfirmation();
 const modal = ref(null);
 const form = useForm({ name: '' });
-const success = computed(() => page.props.flash?.success);
-const error = computed(() => page.props.flash?.error);
 const nameKey = (type) => ({ jabatan: 'nama_jabatan', departemen: 'nama_departemen', penempatan: 'nama_penempatan' })[type];
 const typeLabel = (type) => ({ jabatan: 'Jabatan', departemen: 'Departemen', penempatan: 'Penempatan' })[type];
 const open = (type, item = null) => { modal.value = { type, item }; form.reset(); form.clearErrors(); form.name = item ? item[nameKey(type)] : ''; };
 const close = () => { modal.value = null; form.reset(); form.clearErrors(); };
-const submit = () => {
+const submit = async () => {
     const isEdit = Boolean(modal.value.item);
+    const label = typeLabel(modal.value.type);
+    const confirmed = await confirm({
+        type: isEdit ? 'edit' : 'save',
+        title: `${isEdit ? 'Edit' : 'Simpan'} ${label}`,
+        message: `Apakah Anda yakin ingin ${isEdit ? 'menyimpan perubahan' : 'menyimpan'} data ${label} ini?`,
+        confirmText: 'Ya, Simpan',
+    });
+    if (!confirmed) return;
     const routeName = `dashboard.${modal.value.type}.${isEdit ? 'update' : 'store'}`;
     const payloadKey = nameKey(modal.value.type);
     form.transform(() => ({ [payloadKey]: form.name, ...(isEdit ? { _method: 'put' } : {}) })).post(route(routeName, isEdit ? modal.value.item.id : undefined), { onSuccess: close });
 };
-const remove = (type, item) => { if (confirm(`Hapus ${type} ini?`)) router.delete(route(`dashboard.${type}.destroy`, item.id), { preserveScroll: true }); };
+const remove = async (type, item) => {
+    const label = typeLabel(type);
+    const confirmed = await confirm({
+        type: 'delete',
+        title: `Hapus ${label}`,
+        message: `Apakah Anda yakin ingin menghapus data ${label} ini?`,
+        description: 'Tindakan ini tidak dapat dibatalkan.',
+        confirmText: 'Ya, Hapus',
+    });
+    if (confirmed) router.delete(route(`dashboard.${type}.destroy`, item.id), { preserveScroll: true });
+};
 </script>
 <template>
     <Head title="Master Organisasi" />
     <InternalDashboardLayout :user="user" title="Master Organisasi" :can-manage-employee-masters="true">
         <div class="mx-auto max-w-[1380px] px-4 py-5 sm:px-6 lg:px-7">
-            <div v-if="success" class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ success }}</div>
-            <div v-if="error" class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
             <div class="mb-5 border-b border-slate-200 pb-4"><h2 class="text-[20px] font-bold leading-tight text-[#172554]">Master Organisasi</h2><p class="mt-1 max-w-2xl text-xs leading-5 text-slate-500">Kelola Jabatan, Departemen, dan Penempatan yang digunakan pada data Karyawan.</p></div>
             <div class="grid items-start gap-5 xl:grid-cols-3">
                 <section v-for="group in [{type:'jabatan',title:'Data Jabatan',items:jabatan,nameKey:'nama_jabatan'},{type:'departemen',title:'Data Departemen',items:departemen,nameKey:'nama_departemen'},{type:'penempatan',title:'Data Penempatan',items:penempatan,nameKey:'nama_penempatan'}]" :key="group.type" class="overflow-hidden rounded-[10px] border border-[#dbe2ea] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.06)]">

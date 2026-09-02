@@ -1,16 +1,13 @@
 <script setup>
 import InternalDashboardLayout from '@/Layouts/InternalDashboardLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 
 const props = defineProps({
     employees: { type: Object, required: true }, filters: { type: Object, required: true },
     masterData: { type: Object, required: true }, permissions: { type: Object, required: true }, user: { type: Object, required: true },
 });
-const page = usePage();
 const query = reactive({ ...props.filters });
-const success = computed(() => page.props.flash?.success);
-const error = computed(() => page.props.flash?.error);
 const filterPanelOpen = ref(false);
 const exportModalOpen = ref(false);
 const exportStatus = ref('aktif');
@@ -74,8 +71,6 @@ const genderLabel = (gender) => gender === 'L' ? 'Laki-laki' : gender === 'P' ? 
     <Head title="Data Karyawan" />
     <InternalDashboardLayout :user="user" title="Data Karyawan" :can-manage-employee-masters="permissions.canManageMasters">
         <div class="mx-auto max-w-[1500px] px-4 py-5 sm:px-6 lg:px-7">
-            <div v-if="success" class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ success }}</div>
-            <div v-if="error" class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
             <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
                 <div><h2 class="text-[20px] font-bold leading-tight text-[#172554]">Data Karyawan</h2><p class="mt-1 text-xs text-slate-500">{{ permissions.canManage ? 'Kelola informasi dan status karyawan Kampoeng Radja.' : 'Daftar seluruh karyawan Kampoeng Radja (read-only).' }}</p></div>
                 <div v-if="permissions.canManage || permissions.canExport" class="flex flex-wrap items-center gap-2">

@@ -2,12 +2,15 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useConfirmation } from '@/composables/useConfirmation';
 
 defineProps({ items: { type: Array, required: true } });
 const page = usePage();
+const { confirm } = useConfirmation();
 const successMessage = computed(() => page.props.flash?.success);
-const destroyItem = (item) => {
-    if (!window.confirm(`Hapus Promo “${item.judul}”? Poster terkait juga akan dihapus.`)) return;
+const destroyItem = async (item) => {
+    const confirmed = await confirm({ type: 'delete', title: 'Hapus Promo', message: `Apakah Anda yakin ingin menghapus Promo “${item.judul}”?`, description: 'Poster terkait juga akan dihapus.', confirmText: 'Ya, Hapus' });
+    if (!confirmed) return;
     router.delete(route('admin.event-promo.destroy', item.id), { preserveScroll: true });
 };
 </script>

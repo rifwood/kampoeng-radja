@@ -14,6 +14,10 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    centered: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['close']);
@@ -70,6 +74,8 @@ const maxWidthClass = computed(() => {
         lg: 'sm:max-w-lg',
         xl: 'sm:max-w-xl',
         '2xl': 'sm:max-w-2xl',
+        '3xl': 'sm:max-w-3xl',
+        '4xl': 'lg:max-w-4xl',
     }[props.maxWidth];
 });
 </script>
@@ -80,7 +86,8 @@ const maxWidthClass = computed(() => {
         ref="dialog"
     >
         <div
-            class="fixed inset-0 z-50 overflow-y-auto px-4 py-6 sm:px-0"
+            :class="centered ? 'flex items-center justify-center overflow-hidden px-3 py-5 sm:px-4' : 'overflow-y-auto px-4 py-6 sm:px-0'"
+            class="fixed inset-0 z-50"
             scroll-region
         >
             <Transition
@@ -112,8 +119,8 @@ const maxWidthClass = computed(() => {
             >
                 <div
                     v-show="show"
-                    class="mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:mx-auto sm:w-full"
-                    :class="maxWidthClass"
+                    class="transform overflow-hidden bg-white shadow-xl transition-all sm:w-full"
+                    :class="[maxWidthClass, centered ? 'w-full max-w-[calc(100vw-1.5rem)] rounded-2xl border border-slate-200 shadow-2xl sm:max-w-[90vw]' : 'mb-6 rounded-lg sm:mx-auto']"
                 >
                     <slot v-if="showSlot" />
                 </div>
