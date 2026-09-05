@@ -53,15 +53,6 @@ Panel ini hanya dikirim kepada actor yang memiliki capability View Closing Event
 
 Status `dibatalkan` hanya muncul sebagai jumlah pada panel ini dan tetap dikecualikan dari chart nilai serta total pengunjung aktif.
 
-## Akses Cepat
-
-Shortcut dibentuk dari capability backend dan tidak boleh mengarah ke route 403:
-
-- Data Karyawan: actor dengan page access Karyawan.
-- Kelola Absensi/Data Absensi: label mengikuti capability manage/view.
-- Closing Event: hanya actor dengan View Closing Event.
-- Master Data Event: hanya actor dengan Manage Master Closing Event.
-
 ## Data dan Performance
 
 - Semua business date memakai `Asia/Jakarta`.

@@ -26,19 +26,8 @@ Backend menentukan payload sebelum props Inertia dibentuk. Conditional Vue hanya
 
 Capability Closing Event tetap berasal dari `ClosingEventAccess` (role + jabatan + departemen). Dashboard tidak membuat access matrix duplikat.
 
-## Quick Access
-
-| Shortcut | Visibility |
-| --- | --- |
-| Data Karyawan | Sesuai page access Karyawan existing |
-| Kelola Absensi | `canManageAttendance` |
-| Data Absensi | `canViewAttendance` tanpa manage |
-| Closing Event | `canViewClosingEvent` |
-| Master Data Event | `canManageClosingEventMaster` |
-
 ## Security
 
 - Chart dan Ringkasan Closing Event tidak diserialisasi jika capability View ditolak.
 - Aggregate organisasi tidak diserialisasi untuk User.
-- Shortcut yang disembunyikan bukan pengganti authorization route target.
 - Role/jabatan/departemen selalu dibaca dari relasi authenticated user.

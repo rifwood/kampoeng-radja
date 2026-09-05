@@ -24,8 +24,6 @@ Dashboard Home adalah landing page canonical sistem internal pada `/dashboard`. 
 3. Grafik Pendapatan Harian dari nilai Closing Event pada tanggal mulai
 4. Ringkasan Absensi Hari Ini
 5. Ringkasan Closing Event
-6. Akses Cepat berbasis capability
-
 Kalender Kerja dan Karyawan Terbaru tidak lagi menjadi bagian Dashboard Home.
 
 ## Source of Truth

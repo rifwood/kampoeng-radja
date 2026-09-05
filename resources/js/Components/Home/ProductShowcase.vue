@@ -73,27 +73,14 @@ onBeforeUnmount(() => sectionObserver?.disconnect());
   >
     <div class="mx-auto max-w-[1120px]">
       <header class="mx-auto max-w-[720px] text-center">
-        <span class="inline-flex items-center gap-2 rounded-full border border-[#cddcf0] bg-white px-4 py-2 text-[11px] font-bold tracking-[0.08em] text-[#0751ad] shadow-[0_5px_18px_rgba(16,76,143,.07)]">
-          <img src="/assets/brand/kampoeng-radja-navbar.png" alt="" class="h-4 w-7 object-contain" aria-hidden="true" />
-          KAMPOENG RADJA
-        </span>
-        <h2 id="product-showcase-title" class="mt-4 font-heading text-[38px] font-extrabold leading-none text-[#062a59] sm:text-[48px] lg:text-[56px]">Produk</h2>
+        <h2 id="product-showcase-title" class="font-heading text-[38px] font-extrabold leading-none text-[#062a59] sm:text-[48px] lg:text-[56px]">Produk</h2>
         <p class="mx-auto mt-4 max-w-[620px] text-sm leading-6 text-[#596273] sm:text-base">
           Beragam paket, fasilitas, dan aktivitas terbaik dari Kampoeng Radja<br class="hidden sm:block" />
           untuk pengalaman belajar, bermain, dan berkesan.
         </p>
       </header>
 
-      <div v-if="activeProduct" class="relative mt-10 sm:px-14 lg:mt-12 lg:px-16">
-        <button
-          type="button"
-          class="product-nav absolute left-0 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[#d8e2ef] bg-white text-xl font-bold text-[#075ac2] shadow-[0_8px_24px_rgba(17,61,113,.14)] transition hover:-translate-y-[54%] hover:border-[#075ac2] hover:bg-[#075ac2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60 sm:grid"
-          aria-label="Produk sebelumnya"
-          @click="moveProduct(-1)"
-        >
-          ←
-        </button>
-
+      <div v-if="activeProduct" class="relative mt-10 lg:mt-12">
         <div class="relative aspect-[4/3] overflow-hidden rounded-[22px] border-[6px] border-white bg-[radial-gradient(circle_at_center,#f7fbff_0%,#e4f2ff_100%)] shadow-[0_18px_44px_rgba(13,64,125,.16)] sm:aspect-[16/8] lg:aspect-[16/7]">
           <Transition :name="transitionName" mode="out-in">
             <div
@@ -112,20 +99,6 @@ onBeforeUnmount(() => sectionObserver?.disconnect());
           <span class="sr-only" aria-live="polite">Produk aktif: {{ activeProduct.name }}</span>
         </div>
 
-        <button
-          type="button"
-          class="product-nav absolute right-0 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[#d8e2ef] bg-white text-xl font-bold text-[#075ac2] shadow-[0_8px_24px_rgba(17,61,113,.14)] transition hover:-translate-y-[54%] hover:border-[#075ac2] hover:bg-[#075ac2] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60 sm:grid"
-          aria-label="Produk berikutnya"
-          @click="moveProduct(1)"
-        >
-          →
-        </button>
-
-        <div class="mt-4 flex items-center justify-between sm:hidden">
-          <button type="button" class="product-nav grid h-10 w-10 place-items-center rounded-full border border-[#d8e2ef] bg-white font-bold text-[#075ac2] shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60" aria-label="Produk sebelumnya" @click="moveProduct(-1)">←</button>
-          <span class="text-xs font-semibold text-[#52647a]">{{ activeIndex + 1 }} / {{ products.length }}</span>
-          <button type="button" class="product-nav grid h-10 w-10 place-items-center rounded-full border border-[#d8e2ef] bg-white font-bold text-[#075ac2] shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8cc7ff]/60" aria-label="Produk berikutnya" @click="moveProduct(1)">→</button>
-        </div>
       </div>
 
       <div v-if="products.length" class="relative mt-7 px-10 sm:px-12">

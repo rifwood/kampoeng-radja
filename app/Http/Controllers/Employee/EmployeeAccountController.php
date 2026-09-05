@@ -9,6 +9,7 @@ use App\Http\Requests\Employee\StoreEmployeeAccountRequest;
 use App\Http\Requests\Employee\UpdateEmployeeAccountStatusRequest;
 use App\Models\Karyawan;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Hash;
 
 class EmployeeAccountController extends Controller
 {
@@ -32,5 +33,20 @@ class EmployeeAccountController extends Controller
         return back()->with('success', $request->boolean('is_active')
             ? 'Akun Karyawan berhasil diaktifkan.'
             : 'Akun Karyawan berhasil dinonaktifkan.');
+    }
+
+    public function resetPin(Karyawan $karyawan): RedirectResponse
+    {
+        $account = $karyawan->user()->firstOrFail();
+
+        $account->update([
+            'pin' => Hash::make('123456'),
+            'must_change_pin' => true,
+        ]);
+
+        return back()->with(
+            'success',
+            'PIN berhasil direset. PIN sementara Karyawan adalah 123456 dan wajib diganti saat login berikutnya.',
+        );
     }
 }

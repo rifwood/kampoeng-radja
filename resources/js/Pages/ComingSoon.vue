@@ -1,2 +1,21 @@
-<script setup>import { Head, Link } from '@inertiajs/vue3';</script>
-<template><Head title="Coming Soon" /><main class="grid min-h-screen place-items-center bg-primary-blue/15 p-6 text-center"><div><p class="font-heading text-4xl font-bold">Coming Soon</p><p class="mt-4 text-neutral-gray">Sistem internal sedang dalam pengembangan.</p><Link :href="route('home')" class="mt-7 inline-flex rounded-full bg-primary-orange px-5 py-3 font-bold text-neutral-dark">Kembali ke situs</Link></div></main></template>
+<script setup>
+import { Head, Link } from "@inertiajs/vue3";
+</script>
+<template>
+    <Head title="Coming Soon" />
+    <main
+        class="grid min-h-screen place-items-center bg-primary-blue/15 p-6 text-center"
+    >
+        <div>
+            <p class="font-heading text-4xl font-bold">Coming Soon</p>
+            <p class="mt-4 text-neutral-gray">
+                Sistem internal sedang dalam pengembangan.
+            </p>
+            <Link
+                :href="route('home')"
+                class="mt-7 inline-flex rounded-full bg-primary-orange px-5 py-3 font-bold text-neutral-dark"
+                >Kembali ke situs</Link
+            >
+        </div>
+    </main>
+</template>

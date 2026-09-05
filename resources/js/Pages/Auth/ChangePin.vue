@@ -1,20 +1,20 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import GuestLayout from "@/Layouts/GuestLayout.vue";
+import InputError from "@/Components/InputError.vue";
+import InputLabel from "@/Components/InputLabel.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
+import TextInput from "@/Components/TextInput.vue";
+import { Head, Link, useForm } from "@inertiajs/vue3";
 
 const form = useForm({
-    pin: '',
-    pin_confirmation: '',
+    pin: "",
+    pin_confirmation: "",
 });
 
 const submit = () => {
-    form.put(route('pin.update'), {
+    form.put(route("pin.update"), {
         preserveScroll: true,
-        onSuccess: () => form.reset('pin', 'pin_confirmation'),
+        onSuccess: () => form.reset("pin", "pin_confirmation"),
     });
 };
 </script>
@@ -24,10 +24,15 @@ const submit = () => {
         <Head title="Ganti PIN" />
 
         <div class="mb-6">
-            <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#1769e0]">Keamanan Akun</p>
+            <p
+                class="text-xs font-bold uppercase tracking-[0.18em] text-[#1769e0]"
+            >
+                Keamanan Akun
+            </p>
             <h1 class="mt-2 text-2xl font-bold text-[#15356f]">Ganti PIN</h1>
             <p class="mt-2 text-sm leading-6 text-slate-600">
-                Anda menggunakan PIN sementara. Buat PIN baru sebelum melanjutkan ke Dashboard.
+                Anda menggunakan PIN sementara. Buat PIN baru sebelum
+                melanjutkan ke Dashboard.
             </p>
         </div>
 
@@ -75,8 +80,11 @@ const submit = () => {
                 >
                     Logout
                 </Link>
-                <PrimaryButton :class="{ 'opacity-50': form.processing }" :disabled="form.processing">
-                    {{ form.processing ? 'Menyimpan...' : 'Simpan PIN' }}
+                <PrimaryButton
+                    :class="{ 'opacity-50': form.processing }"
+                    :disabled="form.processing"
+                >
+                    {{ form.processing ? "Menyimpan..." : "Simpan PIN" }}
                 </PrimaryButton>
             </div>
         </form>

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreWahanaRequest;
 use App\Http\Requests\Admin\UpdateWahanaRequest;
+use App\Models\TempatMakan;
+use App\Models\TempatMakanFoto;
 use App\Models\Wahana;
 use App\Models\WahanaFoto;
 use Illuminate\Http\RedirectResponse;
@@ -35,6 +37,14 @@ class WahanaController extends Controller
             'labels' => Wahana::LABELS,
             'featuredLimit' => self::MAX_FEATURED,
             'featuredCount' => $items->where('is_active', true)->where('is_unggulan', true)->count(),
+            'diningItems' => TempatMakan::query()
+                ->with(['photos', 'menuHighlights'])
+                ->orderBy('urutan_tampil')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (TempatMakan $tempatMakan): array => $this->serializeDiningPlace($tempatMakan)),
+            'diningCategories' => TempatMakan::CATEGORIES,
+            'initialTab' => $request->query('tab') === 'tempat-makan' ? 'tempat-makan' : 'wahana',
             'user' => $this->userPayload($request),
         ]);
     }
@@ -276,6 +286,34 @@ class WahanaController extends Controller
         if (! $isUsedAsLegacy && ! $isUsedAsChild) {
             Storage::disk('public')->delete($path);
         }
+    }
+
+    private function serializeDiningPlace(TempatMakan $tempatMakan): array
+    {
+        $photos = $tempatMakan->photos->map(fn (TempatMakanFoto $photo): array => [
+            'id' => $photo->id,
+            'url' => Storage::disk('public')->url($photo->foto),
+            'urutan' => $photo->urutan,
+        ])->values();
+
+        return [
+            'id' => $tempatMakan->id,
+            'nama' => $tempatMakan->nama,
+            'kategori' => $tempatMakan->kategori,
+            'tagline' => $tempatMakan->tagline,
+            'deskripsi' => $tempatMakan->deskripsi,
+            'jam_buka' => $tempatMakan->jam_buka ? substr($tempatMakan->jam_buka, 0, 5) : null,
+            'jam_tutup' => $tempatMakan->jam_tutup ? substr($tempatMakan->jam_tutup, 0, 5) : null,
+            'kapasitas' => $tempatMakan->kapasitas,
+            'lokasi' => $tempatMakan->lokasi,
+            'jenis_menu' => $tempatMakan->jenis_menu,
+            'is_recommended' => $tempatMakan->is_recommended,
+            'is_active' => $tempatMakan->is_active,
+            'urutan_tampil' => $tempatMakan->urutan_tampil,
+            'cover_url' => $photos->first()['url'] ?? null,
+            'photos' => $photos,
+            'menu_highlights' => $tempatMakan->menuHighlights->pluck('nama_menu')->values(),
+        ];
     }
 
     /**

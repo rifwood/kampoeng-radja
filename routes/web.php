@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\HomeHeroController;
 use App\Http\Controllers\Admin\MediaBeritaController;
 use App\Http\Controllers\Admin\MitraController;
 use App\Http\Controllers\Admin\ProdukController;
+use App\Http\Controllers\Admin\TempatMakanController;
 use App\Http\Controllers\Admin\WahanaController;
 use App\Http\Controllers\ClosingEvent\ClosingEventController;
 use App\Http\Controllers\ClosingEvent\ClosingEventMasterController;
@@ -21,7 +22,6 @@ use App\Http\Controllers\PublicPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicPageController::class, 'home'])->name('home');
-
 
 Route::get('/tentang-kami', [PublicPageController::class, 'about'])->name('tentang-kami');
 Route::get('/wahana', [PublicPageController::class, 'rides'])->name('wahana');
@@ -103,6 +103,9 @@ Route::prefix('dashboard')
                 Route::patch('wahana/{wahana}', [WahanaController::class, 'update'])->name('wahana.update');
                 Route::patch('wahana/{wahana}/status', [WahanaController::class, 'toggleStatus'])->name('wahana.status');
                 Route::delete('wahana/{wahana}', [WahanaController::class, 'destroy'])->name('wahana.destroy');
+                Route::post('wahana/tempat-makan', [TempatMakanController::class, 'store'])->name('wahana.dining.store');
+                Route::patch('wahana/tempat-makan/{tempatMakan}', [TempatMakanController::class, 'update'])->name('wahana.dining.update');
+                Route::delete('wahana/tempat-makan/{tempatMakan}', [TempatMakanController::class, 'destroy'])->name('wahana.dining.destroy');
 
                 Route::get('galeri-event', [GaleriEventController::class, 'index'])->name('gallery.index');
                 Route::post('galeri-event', [GaleriEventController::class, 'store'])->name('gallery.store');
@@ -120,6 +123,7 @@ Route::prefix('dashboard')
             Route::get('karyawan/{karyawan}/foto-ktp', [EmployeeController::class, 'photo'])->name('karyawan.photo');
             Route::post('karyawan/{karyawan}/account', [EmployeeAccountController::class, 'store'])->name('karyawan.account.store');
             Route::patch('karyawan/{karyawan}/account/status', [EmployeeAccountController::class, 'updateStatus'])->name('karyawan.account.status');
+            Route::patch('karyawan/{karyawan}/account/reset-pin', [EmployeeAccountController::class, 'resetPin'])->name('karyawan.account.reset-pin');
 
             Route::get('jabatan-departemen', EmployeeMasterController::class)->name('employee-masters.index');
             Route::post('jabatan', [JabatanController::class, 'store'])->name('jabatan.store');

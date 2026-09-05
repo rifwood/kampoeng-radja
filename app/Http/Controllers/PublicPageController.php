@@ -8,6 +8,7 @@ use App\Models\HomeHero;
 use App\Models\MediaBerita;
 use App\Models\Mitra;
 use App\Models\Produk;
+use App\Models\TempatMakan;
 use App\Models\Wahana;
 use App\Support\WhatsAppNumber;
 use Carbon\CarbonImmutable;
@@ -117,8 +118,41 @@ class PublicPageController extends Controller
                 ->orderBy('id')
                 ->get()
                 ->map(fn (Wahana $wahana) => $this->formatWahana($wahana)),
+            'diningPlaces' => TempatMakan::query()
+                ->with(['photos', 'menuHighlights'])
+                ->where('is_active', true)
+                ->orderBy('urutan_tampil')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (TempatMakan $tempatMakan): array => [
+                    'id' => $tempatMakan->id,
+                    'nama' => $tempatMakan->nama,
+                    'kategori' => $tempatMakan->kategori,
+                    'tagline' => $tempatMakan->tagline,
+                    'deskripsi' => $tempatMakan->deskripsi,
+                    'jam_operasional' => $this->formatDiningHours($tempatMakan->jam_buka, $tempatMakan->jam_tutup),
+                    'kapasitas' => $tempatMakan->kapasitas ? $tempatMakan->kapasitas.' Orang' : null,
+                    'lokasi' => $tempatMakan->lokasi,
+                    'jenis_menu' => $tempatMakan->jenis_menu,
+                    'is_recommended' => $tempatMakan->is_recommended,
+                    'photos' => $tempatMakan->photos->map(fn ($photo): array => [
+                        'id' => $photo->id,
+                        'url' => Storage::disk('public')->url($photo->foto),
+                        'urutan' => $photo->urutan,
+                    ])->values(),
+                    'menu_highlights' => $tempatMakan->menuHighlights->pluck('nama_menu')->values(),
+                ]),
             'wahanaFallbackEnabled' => ! Wahana::query()->exists(),
         ]);
+    }
+
+    private function formatDiningHours(?string $opensAt, ?string $closesAt): ?string
+    {
+        if (! $opensAt || ! $closesAt) {
+            return null;
+        }
+
+        return str_replace(':', '.', substr($opensAt, 0, 5)).' – '.str_replace(':', '.', substr($closesAt, 0, 5)).' WIB';
     }
 
     public function events(): Response

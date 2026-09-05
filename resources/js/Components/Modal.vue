@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 const props = defineProps({
     show: {
@@ -8,7 +8,7 @@ const props = defineProps({
     },
     maxWidth: {
         type: String,
-        default: '2xl',
+        default: "2xl",
     },
     closeable: {
         type: Boolean,
@@ -20,7 +20,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(["close"]);
 const dialog = ref();
 const showSlot = ref(props.show);
 
@@ -28,12 +28,12 @@ watch(
     () => props.show,
     () => {
         if (props.show) {
-            document.body.style.overflow = 'hidden';
+            document.body.style.overflow = "hidden";
             showSlot.value = true;
 
             dialog.value?.showModal();
         } else {
-            document.body.style.overflow = '';
+            document.body.style.overflow = "";
 
             setTimeout(() => {
                 dialog.value?.close();
@@ -45,12 +45,12 @@ watch(
 
 const close = () => {
     if (props.closeable) {
-        emit('close');
+        emit("close");
     }
 };
 
 const closeOnEscape = (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
         e.preventDefault();
 
         if (props.show) {
@@ -59,23 +59,23 @@ const closeOnEscape = (e) => {
     }
 };
 
-onMounted(() => document.addEventListener('keydown', closeOnEscape));
+onMounted(() => document.addEventListener("keydown", closeOnEscape));
 
 onUnmounted(() => {
-    document.removeEventListener('keydown', closeOnEscape);
+    document.removeEventListener("keydown", closeOnEscape);
 
-    document.body.style.overflow = '';
+    document.body.style.overflow = "";
 });
 
 const maxWidthClass = computed(() => {
     return {
-        sm: 'sm:max-w-sm',
-        md: 'sm:max-w-md',
-        lg: 'sm:max-w-lg',
-        xl: 'sm:max-w-xl',
-        '2xl': 'sm:max-w-2xl',
-        '3xl': 'sm:max-w-3xl',
-        '4xl': 'lg:max-w-4xl',
+        sm: "sm:max-w-sm",
+        md: "sm:max-w-md",
+        lg: "sm:max-w-lg",
+        xl: "sm:max-w-xl",
+        "2xl": "sm:max-w-2xl",
+        "3xl": "sm:max-w-3xl",
+        "4xl": "lg:max-w-4xl",
     }[props.maxWidth];
 });
 </script>
@@ -86,7 +86,11 @@ const maxWidthClass = computed(() => {
         ref="dialog"
     >
         <div
-            :class="centered ? 'flex items-center justify-center overflow-hidden px-3 py-5 sm:px-4' : 'overflow-y-auto px-4 py-6 sm:px-0'"
+            :class="
+                centered
+                    ? 'flex items-center justify-center overflow-hidden px-3 py-5 sm:px-4'
+                    : 'overflow-y-auto px-4 py-6 sm:px-0'
+            "
             class="fixed inset-0 z-50"
             scroll-region
         >
@@ -103,9 +107,7 @@ const maxWidthClass = computed(() => {
                     class="fixed inset-0 transform transition-all"
                     @click="close"
                 >
-                    <div
-                        class="absolute inset-0 bg-gray-500 opacity-75"
-                    />
+                    <div class="absolute inset-0 bg-gray-500 opacity-75" />
                 </div>
             </Transition>
 
@@ -120,7 +122,12 @@ const maxWidthClass = computed(() => {
                 <div
                     v-show="show"
                     class="transform overflow-hidden bg-white shadow-xl transition-all sm:w-full"
-                    :class="[maxWidthClass, centered ? 'w-full max-w-[calc(100vw-1.5rem)] rounded-2xl border border-slate-200 shadow-2xl sm:max-w-[90vw]' : 'mb-6 rounded-lg sm:mx-auto']"
+                    :class="[
+                        maxWidthClass,
+                        centered
+                            ? 'w-full max-w-[calc(100vw-1.5rem)] rounded-2xl border border-slate-200 shadow-2xl sm:max-w-[90vw]'
+                            : 'mb-6 rounded-lg sm:mx-auto',
+                    ]"
                 >
                     <slot v-if="showSlot" />
                 </div>

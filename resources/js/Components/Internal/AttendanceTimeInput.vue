@@ -1,54 +1,69 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch } from "vue";
 
 const props = defineProps({
-    modelValue: { type: String, default: '' },
+    modelValue: { type: String, default: "" },
     disabled: { type: Boolean, default: false },
     label: { type: String, required: true },
-    error: { type: String, default: '' },
-    minTime: { type: String, default: '' },
-    maxTime: { type: String, default: '' },
-    indicator: { type: String, default: '' },
+    error: { type: String, default: "" },
+    minTime: { type: String, default: "" },
+    maxTime: { type: String, default: "" },
+    indicator: { type: String, default: "" },
 });
 
-const emit = defineEmits(['update:modelValue', 'navigate-next', 'navigate-row']);
+const emit = defineEmits([
+    "update:modelValue",
+    "navigate-next",
+    "navigate-row",
+]);
 const hasBlurred = ref(false);
 const input = ref(null);
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const localError = computed(() => {
-    if (props.disabled || !props.modelValue) return '';
+    if (props.disabled || !props.modelValue) return "";
 
     if (!timePattern.test(props.modelValue)) {
         return hasBlurred.value || props.modelValue.length === 5
-            ? 'Gunakan format HH:MM (00:00–23:59).'
-            : '';
+            ? "Gunakan format HH:MM (00:00–23:59)."
+            : "";
     }
 
-    if (props.maxTime && timePattern.test(props.maxTime) && props.modelValue > props.maxTime) {
+    if (
+        props.maxTime &&
+        timePattern.test(props.maxTime) &&
+        props.modelValue > props.maxTime
+    ) {
         return `Jam masuk maksimal pukul ${props.maxTime}.`;
     }
 
-    if (props.minTime && timePattern.test(props.minTime) && props.modelValue < props.minTime) {
-        return 'Jam keluar tidak boleh lebih awal dari jam masuk.';
+    if (
+        props.minTime &&
+        timePattern.test(props.minTime) &&
+        props.modelValue < props.minTime
+    ) {
+        return "Jam keluar tidak boleh lebih awal dari jam masuk.";
     }
 
-    return '';
+    return "";
 });
 
 const visibleError = computed(() => localError.value || props.error);
 
 const handleInput = (event) => {
-    emit('update:modelValue', event.target.value);
+    emit("update:modelValue", event.target.value);
 };
 
 defineExpose({
     focus: () => input.value?.focus(),
 });
 
-watch(() => props.disabled, (disabled) => {
-    if (disabled) hasBlurred.value = false;
-});
+watch(
+    () => props.disabled,
+    (disabled) => {
+        if (disabled) hasBlurred.value = false;
+    },
+);
 </script>
 
 <template>
@@ -70,11 +85,14 @@ watch(() => props.disabled, (disabled) => {
             @keydown.enter.prevent="emit('navigate-next')"
             @keydown.up.prevent="emit('navigate-row', -1)"
             @keydown.down.prevent="emit('navigate-row', 1)"
-        >
+        />
         <p v-if="visibleError" class="mt-1 text-[10px] leading-4 text-red-600">
             {{ visibleError }}
         </p>
-        <p v-else-if="indicator" class="mt-1 text-[10px] font-semibold leading-4 text-amber-600">
+        <p
+            v-else-if="indicator"
+            class="mt-1 text-[10px] font-semibold leading-4 text-amber-600"
+        >
             {{ indicator }}
         </p>
     </div>
